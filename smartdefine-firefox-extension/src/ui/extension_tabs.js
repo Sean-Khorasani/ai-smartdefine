@@ -1056,7 +1056,7 @@ function generatePdfExport(wordsData, filename) {
         <h1>⚡ SmartDefine Word Export</h1>
         <p>Generated on ${new Date().toLocaleDateString()}</p>
         <p>Total words: ${wordsData.length}</p>
-        <button id="printBtn" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 15px;">
+        <button id="printBtn" onclick="window.print();" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 15px;">
             🖨️ Print to PDF
         </button>
     </div>
