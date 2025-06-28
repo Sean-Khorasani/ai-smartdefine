@@ -41,6 +41,17 @@ function createElement(tag, attributes = {}, content = null) {
   return element;
 }
 
+// Safely set HTML using DOMParser to avoid innerHTML
+function safeSetHTML(element, htmlString) {
+  if (!element) return;
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(htmlString, 'text/html');
+  element.textContent = '';
+  parsed.body.childNodes.forEach(node => {
+    element.appendChild(node.cloneNode(true));
+  });
+}
+
 /**
  * Creates and displays a modal dialog with the LLM's formatted response.
  * @param {string} selectedText - The text the user selected.
@@ -897,11 +908,7 @@ browser.runtime.onMessage.addListener(async (message) => {
       providers: settings.providers
     });
     
-    const hasAPIKey = settings.providers && 
-                     settings.selectedProvider &&
-                     settings.providers[settings.selectedProvider] && 
-                     settings.providers[settings.selectedProvider].apiKey &&
-                     settings.providers[settings.selectedProvider].apiKey.trim().length > 0;
+    const hasAPIKey = Object.values(settings.providers || {}).some(p => p.enabled && p.apiKey && p.apiKey.trim().length > 0);
     
     console.log('API Key check result:', hasAPIKey);
     
@@ -915,7 +922,22 @@ browser.runtime.onMessage.addListener(async (message) => {
         // Extract context around the selected text only if enabled
         const learningSettings = settings.learningSettings || {};
         const context = learningSettings.contextAwareDefinitions ? extractContext(selectedText) : null;
-        
+
+        // Build prompt for logging
+        let finalPrompt = (settings.prompt || '').replace(/X_WORD_X/g, selectedText);
+        if (context) {
+          let contextInfo = "\n\nCONTEXT INFORMATION:";
+          if (context.fullSentence) {
+            contextInfo += `\nThe word appears in this sentence: "${context.fullSentence}"`;
+          }
+          if (context.before && context.after) {
+            contextInfo += `\nSurrounding text: "...${context.before} [${selectedText}] ${context.after}..."`;
+          }
+          contextInfo += "\n\nPlease provide a definition that is appropriate for this specific context. Consider how the word is being used in this particular situation.";
+          finalPrompt += contextInfo;
+        }
+        console.log('LLM Prompt:', finalPrompt);
+
         // Send request to background script to call LLM API with context (already has fallback)
         const response = await browser.runtime.sendMessage({
           command: "callLLMAPI",
@@ -924,8 +946,13 @@ browser.runtime.onMessage.addListener(async (message) => {
           settings: settings
         });
 
-        // Update modal with the formatted response
-        createResponseModal(selectedText, response, context);
+        if (response && typeof response === 'object') {
+          console.log('LLM Response from', response.provider + ':', response.text);
+          createResponseModal(selectedText, response.text, context);
+        } else {
+          console.log('LLM Response:', response);
+          createResponseModal(selectedText, response, context);
+        }
       } else {
         // No API key configured, directly use free dictionary API
         console.log('No API key found, using free dictionary service');
@@ -938,7 +965,9 @@ browser.runtime.onMessage.addListener(async (message) => {
             command: 'callFreeDictionaryAPI',
             text: selectedText
           });
-          
+
+          console.log('Dictionary Response:', dictionaryResponse);
+
           // Update modal with dictionary response
           createResponseModal(selectedText, dictionaryResponse);
         } catch (dictError) {
@@ -961,7 +990,9 @@ browser.runtime.onMessage.addListener(async (message) => {
           command: 'callFreeDictionaryAPI',
           text: selectedText
         });
-        
+
+        console.log('Dictionary Response:', fallbackResponse);
+
         // Update modal with dictionary response
         createResponseModal(selectedText, fallbackResponse);
       } catch (dictError) {
