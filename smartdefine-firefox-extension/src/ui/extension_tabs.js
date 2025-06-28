@@ -976,9 +976,19 @@ function generateFlashcardsExport(wordsData, filename) {
 </html>`;
 
   // Open new window with the flashcard content
-  const dataUrl = 'data:text/html;charset=utf-8,' +
-    encodeURIComponent(htmlContent);
-  window.open(dataUrl, '_blank');
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+
+  if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
+    browser.tabs.create({ url }).then(() => {
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    });
+  } else {
+    const newWindow = window.open(url, '_blank');
+    if (newWindow) {
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  }
 }
 
 // Generate JSON export
