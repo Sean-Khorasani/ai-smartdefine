@@ -978,7 +978,11 @@ function generateFlashcardsExport(wordsData, filename) {
   // Open new window with the flashcard content
   const dataUrl = 'data:text/html;charset=utf-8,' +
     encodeURIComponent(htmlContent);
-  window.open(dataUrl, '_blank');
+  if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
+    browser.tabs.create({ url: dataUrl });
+  } else {
+    window.open(dataUrl, '_blank');
+  }
 }
 
 // Generate JSON export
