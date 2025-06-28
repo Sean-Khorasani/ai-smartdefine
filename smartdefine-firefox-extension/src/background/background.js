@@ -90,12 +90,14 @@ async function callLLMAPI(selectedText, context, settings) {
   for (const name of providerOrder) {
     const config = providers[name];
     if (!config || !config.enabled) {
+      
       console.log(`Skipping provider ${name}: disabled`);
       lastError = new Error(`${name} provider disabled`);
       continue;
     }
 
     if (!config.apiKey || config.apiKey.trim() === '') {
+
       console.log(`Skipping provider ${name}: API key missing`);
       lastError = new Error(`API key not configured for ${name}`);
       continue;
@@ -116,6 +118,7 @@ async function callLLMAPI(selectedText, context, settings) {
           continue;
       }
       console.log(`Provider ${name} succeeded`);
+
       console.log('LLM raw response:', result);
       return { provider: name, text: result };
     } catch (err) {
