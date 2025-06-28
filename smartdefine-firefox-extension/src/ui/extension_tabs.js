@@ -976,7 +976,7 @@ function generateFlashcardsExport(wordsData, filename) {
 </html>`;
 
   // Open new window with the flashcard content
-  const newWindow = window.open('', '_blank');
+  const newWindow = window.open('about:blank', '_blank');
   newWindow.document.open();
   const parser = new DOMParser();
   const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
@@ -1083,7 +1083,7 @@ function generatePdfExport(wordsData, filename) {
 </html>`;
 
   // Open new window with the content
-  const newWindow = window.open('', '_blank');
+  const newWindow = window.open('about:blank', '_blank');
   newWindow.document.open();
   const parser = new DOMParser();
   const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
