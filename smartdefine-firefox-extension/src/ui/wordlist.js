@@ -869,11 +869,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Use the formatExplanationToHTML function which already returns safe HTML
     // Convert to DOM elements using a temporary container
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = formattedExplanation;
-    while (tempDiv.firstChild) {
-      definitionSection.appendChild(tempDiv.firstChild);
-    }
+    const parser = new DOMParser();
+    const parsedExplanation = parser.parseFromString(formattedExplanation, 'text/html');
+    parsedExplanation.body.childNodes.forEach(node => {
+      definitionSection.appendChild(node.cloneNode(true));
+    });
     
     contentPadding.appendChild(definitionSection);
     
