@@ -2036,7 +2036,7 @@ function initializeProviders() {
       
       // Add selected class to clicked card
       card.classList.add('selected');
-      
+
       // Get provider info
       const provider = card.getAttribute('data-provider');
       selectedProvider = provider;
@@ -2045,6 +2045,13 @@ function initializeProviders() {
       if (apiConfigPanel) {
         apiConfigPanel.classList.add('show');
         loadProviderConfig(provider);
+        // Update current provider display immediately
+        browser.storage.local.get(['providers']).then(storage => {
+          updateCurrentProviderDisplay({
+            selectedProvider: provider,
+            providers: storage.providers || {}
+          });
+        });
       }
     });
   });
@@ -2078,6 +2085,12 @@ async function loadProviderConfig(provider) {
         apiKeyInput.addEventListener('input', updateState);
       }
     }
+
+    // Refresh provider display with loaded configuration
+    updateCurrentProviderDisplay({
+      selectedProvider: provider,
+      providers
+    });
   } catch (error) {
     console.error('Error loading provider config:', error);
   }
