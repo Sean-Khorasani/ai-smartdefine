@@ -908,7 +908,7 @@ browser.runtime.onMessage.addListener(async (message) => {
       providers: settings.providers
     });
     
-    const hasAPIKey = Object.values(settings.providers || {}).some(p => p.apiKey && p.apiKey.trim().length > 0);
+    const hasAPIKey = Object.values(settings.providers || {}).some(p => p.enabled && p.apiKey && p.apiKey.trim().length > 0);
     
     console.log('API Key check result:', hasAPIKey);
     
@@ -946,10 +946,13 @@ browser.runtime.onMessage.addListener(async (message) => {
           settings: settings
         });
 
-        console.log('LLM Response:', response);
-
-        // Update modal with the formatted response
-        createResponseModal(selectedText, response, context);
+        if (response && typeof response === 'object') {
+          console.log('LLM Response from', response.provider + ':', response.text);
+          createResponseModal(selectedText, response.text, context);
+        } else {
+          console.log('LLM Response:', response);
+          createResponseModal(selectedText, response, context);
+        }
       } else {
         // No API key configured, directly use free dictionary API
         console.log('No API key found, using free dictionary service');

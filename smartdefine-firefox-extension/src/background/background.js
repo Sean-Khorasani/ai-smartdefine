@@ -29,12 +29,14 @@ browser.runtime.onInstalled.addListener(() => {
       Together: {
         baseUrl: "https://api.together.xyz",
         model: "meta-llama/Llama-3-70b-chat-hf",
-        apiKey: ""
+        apiKey: "",
+        enabled: false
       },
       OpenRouter: {
         baseUrl: "https://openrouter.ai/api/v1",
         model: "google/gemini-flash-1.5",
-        apiKey: ""
+        apiKey: "",
+        enabled: false
       }
     },
     learningSettings: {
@@ -87,20 +89,32 @@ async function callLLMAPI(selectedText, context, settings) {
   let lastError = null;
   for (const name of providerOrder) {
     const config = providers[name];
-    if (!config || !config.apiKey || config.apiKey.trim() === '') {
+    if (!config || !config.enabled) {
+      lastError = new Error(`${name} provider disabled`);
+      continue;
+    }
+
+    if (!config.apiKey || config.apiKey.trim() === '') {
       lastError = new Error(`API key not configured for ${name}`);
       continue;
     }
 
     try {
+      console.log('Trying provider:', name);
+      let result;
       switch (name) {
         case 'Together':
-          return await callTogetherAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          result = await callTogetherAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          break;
         case 'OpenRouter':
-          return await callOpenRouterAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          result = await callOpenRouterAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          break;
         default:
           lastError = new Error(`Unsupported provider: ${name}`);
+          continue;
       }
+      console.log(`Provider ${name} succeeded`);
+      return { provider: name, text: result };
     } catch (err) {
       lastError = err;
       console.warn(`${name} provider failed:`, err.message);

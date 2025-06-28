@@ -2060,10 +2060,24 @@ async function loadProviderConfig(provider) {
     const baseUrlInput = document.getElementById('configBaseUrl');
     const modelInput = document.getElementById('configModel');
     const apiKeyInput = document.getElementById('configApiKey');
-    
+    const enabledCheckbox = document.getElementById('configProviderEnabled');
+
     if (baseUrlInput) baseUrlInput.value = config.baseUrl || '';
     if (modelInput) modelInput.value = config.model || '';
     if (apiKeyInput) apiKeyInput.value = config.apiKey || '';
+
+    if (enabledCheckbox) {
+      enabledCheckbox.checked = !!config.enabled;
+      const updateState = () => {
+        const hasKey = apiKeyInput && apiKeyInput.value.trim() !== '';
+        enabledCheckbox.disabled = !hasKey;
+        if (!hasKey) enabledCheckbox.checked = false;
+      };
+      updateState();
+      if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', updateState);
+      }
+    }
   } catch (error) {
     console.error('Error loading provider config:', error);
   }
@@ -2156,11 +2170,14 @@ function updateCurrentProviderDisplay(storage) {
   }
   
   if (currentProviderStatus) {
-    if (providerConfig.apiKey) {
-      currentProviderStatus.textContent = 'API key configured ✓';
+    if (!providerConfig.apiKey) {
+      currentProviderStatus.textContent = 'No API key set';
+      currentProviderStatus.style.color = 'var(--text-muted)';
+    } else if (providerConfig.enabled) {
+      currentProviderStatus.textContent = 'Enabled ✓';
       currentProviderStatus.style.color = 'var(--primary-color)';
     } else {
-      currentProviderStatus.textContent = 'No API key set';
+      currentProviderStatus.textContent = 'Disabled';
       currentProviderStatus.style.color = 'var(--text-muted)';
     }
   }
@@ -2263,11 +2280,13 @@ async function collectAllSettings() {
     const baseUrlInput = document.getElementById('configBaseUrl');
     const modelInput = document.getElementById('configModel');
     const apiKeyInput = document.getElementById('configApiKey');
-    
+    const enabledCheckbox = document.getElementById('configProviderEnabled');
+
     providers[selectedProvider] = {
       baseUrl: baseUrlInput ? baseUrlInput.value.trim() : '',
       model: modelInput ? modelInput.value.trim() : '',
-      apiKey: apiKeyInput ? apiKeyInput.value.trim() : ''
+      apiKey: apiKeyInput ? apiKeyInput.value.trim() : '',
+      enabled: enabledCheckbox ? enabledCheckbox.checked : false
     };
   }
   
