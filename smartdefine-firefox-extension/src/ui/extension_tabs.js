@@ -978,7 +978,12 @@ function generateFlashcardsExport(wordsData, filename) {
   // Open new window with the flashcard content
   const newWindow = window.open('', '_blank');
   newWindow.document.open();
-  newWindow.document.documentElement.innerHTML = htmlContent;
+  const parser = new DOMParser();
+  const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
+  newWindow.document.replaceChild(
+    newWindow.document.adoptNode(parsedDoc.documentElement),
+    newWindow.document.documentElement
+  );
   newWindow.document.close();
 }
 
@@ -1080,7 +1085,12 @@ function generatePdfExport(wordsData, filename) {
   // Open new window with the content
   const newWindow = window.open('', '_blank');
   newWindow.document.open();
-  newWindow.document.documentElement.innerHTML = htmlContent;
+  const parser = new DOMParser();
+  const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
+  newWindow.document.replaceChild(
+    newWindow.document.adoptNode(parsedDoc.documentElement),
+    newWindow.document.documentElement
+  );
   newWindow.document.close();
 }
 
@@ -1278,12 +1288,11 @@ window.viewWord = async function(word, category) {
   const explanationDiv = document.createElement('div');
   explanationDiv.style.cssText = 'line-height: 1.8; color: #333; font-size: 15px;';
   const formattedExplanation = formatWordExplanation(wordData.explanation);
-  // Handle the formatted explanation safely
-  const tempContainer = document.createElement('div');
-  tempContainer.innerHTML = formattedExplanation;
-  while (tempContainer.firstChild) {
-    explanationDiv.appendChild(tempContainer.firstChild);
-  }
+  const parser = new DOMParser();
+  const parsedExplanation = parser.parseFromString(formattedExplanation, 'text/html');
+  parsedExplanation.body.childNodes.forEach(node => {
+    explanationDiv.appendChild(node.cloneNode(true));
+  });
   
   content.appendChild(headerDiv);
   content.appendChild(explanationDiv);
@@ -1711,7 +1720,12 @@ function initializePracticeSession(words, mode) {
     console.log(`Showing word ${currentWordIndex + 1}/${words.length}: ${currentWord.word} (mode: ${mode})`);
     
     const content = generatePracticeContent(currentWord, mode, progress, currentWordIndex, words.length, isRevealed);
-    practiceSession.innerHTML = content;
+    practiceSession.textContent = '';
+    const parser = new DOMParser();
+    const parsedContent = parser.parseFromString(content, 'text/html');
+    parsedContent.body.childNodes.forEach(node => {
+      practiceSession.appendChild(node.cloneNode(true));
+    });
     
     // Set up event listeners for the dynamically created buttons
     setupPracticeSessionEventListeners(mode, currentWord);
@@ -1898,7 +1912,8 @@ function initializePracticeSession(words, mode) {
   
   function showResults() {
     const percentage = Math.round((score / words.length) * 100);
-    practiceSession.innerHTML = `
+    practiceSession.textContent = '';
+    const resultsHTML = `
       <div style="text-align: center; padding: 40px;">
         <div style="background: white; border-radius: 16px; padding: 40px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
           <h2 style="color: #4CAF50; margin-bottom: 20px;">🎉 Practice Complete!</h2>
@@ -1919,7 +1934,12 @@ function initializePracticeSession(words, mode) {
         </div>
       </div>
     `;
-    
+    const parser = new DOMParser();
+    const parsedResults = parser.parseFromString(resultsHTML, 'text/html');
+    parsedResults.body.childNodes.forEach(node => {
+      practiceSession.appendChild(node.cloneNode(true));
+    });
+
     // Set up event listeners for completion screen buttons
     const practiceAgainBtn = document.getElementById('practiceAgainBtn');
     if (practiceAgainBtn) {
@@ -1943,7 +1963,7 @@ function initializePracticeSession(words, mode) {
 function showPracticeError(message) {
   const practiceContainer = document.querySelector('#practice-tab .practice-container');
   if (practiceContainer) {
-    practiceContainer.innerHTML = `
+    const errorHTML = `
       <div class="practice-card" style="display: block;">
         <div style="text-align: center; color: #f44336;">
           <h3>⚠️ Practice Unavailable</h3>
@@ -1954,6 +1974,12 @@ function showPracticeError(message) {
         </div>
       </div>
     `;
+    practiceContainer.textContent = '';
+    const parser = new DOMParser();
+    const parsedError = parser.parseFromString(errorHTML, 'text/html');
+    parsedError.body.childNodes.forEach(node => {
+      practiceContainer.appendChild(node.cloneNode(true));
+    });
     
     // Add event listener after creating the button
     const goToWordListBtn = document.getElementById('goToWordListBtn');
