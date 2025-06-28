@@ -29,12 +29,14 @@ browser.runtime.onInstalled.addListener(() => {
       Together: {
         baseUrl: "https://api.together.xyz",
         model: "meta-llama/Llama-3-70b-chat-hf",
-        apiKey: ""
+        apiKey: "",
+        enabled: false
       },
       OpenRouter: {
         baseUrl: "https://openrouter.ai/api/v1",
         model: "google/gemini-flash-1.5",
-        apiKey: ""
+        apiKey: "",
+        enabled: false
       }
     },
     learningSettings: {
@@ -53,49 +55,73 @@ browser.runtime.onInstalled.addListener(() => {
 });
 
 
-// Function to call different LLM APIs
+// Function to call different LLM APIs with fallback when one fails
 async function callLLMAPI(selectedText, context, settings) {
   const { selectedProvider, prompt, providers } = settings;
-  
-  if (!providers || !providers[selectedProvider]) {
-    throw new Error(`Provider configuration not found: ${selectedProvider}`);
+
+  if (!providers || Object.keys(providers).length === 0) {
+    throw new Error('Provider configuration not found');
   }
-  
-  const providerConfig = providers[selectedProvider];
-  const { baseUrl, model, apiKey } = providerConfig;
-  
-  if (!apiKey) {
-    throw new Error(`API key not configured for ${selectedProvider}`);
-  }
-  
-  // Create context-aware prompt
+
+  // Build the prompt once
   let finalPrompt = prompt.replace(/X_WORD_X/g, selectedText);
-  
-  // Add context information if available
   if (context) {
     let contextInfo = "\n\nCONTEXT INFORMATION:";
-    
     if (context.fullSentence) {
       contextInfo += `\nThe word appears in this sentence: "${context.fullSentence}"`;
     }
-    
     if (context.before && context.after) {
       contextInfo += `\nSurrounding text: "...${context.before} [${selectedText}] ${context.after}..."`;
     }
-    
     contextInfo += "\n\nPlease provide a definition that is appropriate for this specific context. Consider how the word is being used in this particular situation.";
-    
     finalPrompt += contextInfo;
   }
-  
-  switch (selectedProvider) {
-    case "Together":
-      return await callTogetherAPI(finalPrompt, baseUrl, model, apiKey);
-    case "OpenRouter":
-      return await callOpenRouterAPI(finalPrompt, baseUrl, model, apiKey);
-    default:
-      throw new Error(`Unsupported provider: ${selectedProvider}`);
+
+  // Determine provider order (selected provider first, then others)
+  const providerOrder = [];
+  if (selectedProvider && providers[selectedProvider]) {
+    providerOrder.push(selectedProvider);
   }
+  for (const name of Object.keys(providers)) {
+    if (name !== selectedProvider) providerOrder.push(name);
+  }
+
+  let lastError = null;
+  for (const name of providerOrder) {
+    const config = providers[name];
+    if (!config || !config.enabled) {
+      lastError = new Error(`${name} provider disabled`);
+      continue;
+    }
+
+    if (!config.apiKey || config.apiKey.trim() === '') {
+      lastError = new Error(`API key not configured for ${name}`);
+      continue;
+    }
+
+    try {
+      console.log('Trying provider:', name);
+      let result;
+      switch (name) {
+        case 'Together':
+          result = await callTogetherAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          break;
+        case 'OpenRouter':
+          result = await callOpenRouterAPI(finalPrompt, config.baseUrl, config.model, config.apiKey);
+          break;
+        default:
+          lastError = new Error(`Unsupported provider: ${name}`);
+          continue;
+      }
+      console.log(`Provider ${name} succeeded`);
+      return { provider: name, text: result };
+    } catch (err) {
+      lastError = err;
+      console.warn(`${name} provider failed:`, err.message);
+    }
+  }
+
+  throw lastError || new Error('All providers failed');
 }
 
 
