@@ -1073,32 +1073,23 @@ function generatePdfExport(wordsData, filename) {
         </div>
     `).join('')}
     
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const printBtn = document.getElementById('printBtn');
-            if (printBtn) {
-                printBtn.addEventListener('click', () => {
-                    window.print();
-                });
-            }
-        });
-    </script>
 </body>
 </html>`;
 
-  // Open new window with the content
-  const blob = new Blob([htmlContent], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-
-  if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
-    browser.tabs.create({ url }).then(() => {
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // Open new window and write the content directly so scripts are allowed
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.addEventListener('load', () => {
+      const btn = printWindow.document.getElementById('printBtn');
+      if (btn) {
+        btn.addEventListener('click', () => printWindow.print());
+      }
+      printWindow.print();
+      setTimeout(() => printWindow.close(), 1000);
     });
-  } else {
-    const newWindow = window.open(url, '_blank');
-    if (newWindow) {
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-    }
   }
 }
 

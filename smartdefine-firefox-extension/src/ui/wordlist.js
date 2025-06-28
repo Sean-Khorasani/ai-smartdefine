@@ -499,18 +499,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Create a simple HTML document for PDF conversion
     const htmlContent = generatePDFContent(words);
 
-    // Use a Blob URL to avoid very long data URLs
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    // Open window and trigger the print dialog once loaded
-    const printWindow = window.open(url, '_blank');
+    // Open new window and write content directly to avoid CSP issues
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.onload = () => {
+      printWindow.document.open();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.addEventListener('load', () => {
         printWindow.print();
         setTimeout(() => printWindow.close(), 1000);
-      };
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      });
     }
 
     showMessage('PDF export initiated! Use your browser\'s print dialog to save as PDF.', 'success');
@@ -1126,16 +1124,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportWordToPDF(wordData) {
     const htmlContent = generateSingleWordPDFContent(wordData);
     
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    const printWindow = window.open(url, '_blank');
+    const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.onload = () => {
+      printWindow.document.open();
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.addEventListener('load', () => {
         printWindow.print();
         setTimeout(() => printWindow.close(), 1000);
-      };
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      });
     }
     
     showMessage(`"${wordData.word}" PDF export initiated!`, 'success');
