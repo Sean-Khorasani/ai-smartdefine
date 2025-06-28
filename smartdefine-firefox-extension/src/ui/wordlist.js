@@ -499,11 +499,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Create a simple HTML document for PDF conversion
     const htmlContent = generatePDFContent(words);
     
-    // Create a new window for PDF printing
+    // Create a new window for PDF printing using safe DOM methods
     const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.documentElement.innerHTML = htmlContent;
-    printWindow.document.close();
+    const parser = new DOMParser();
+    const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
+    printWindow.document.replaceChild(
+      printWindow.document.adoptNode(parsedDoc.documentElement),
+      printWindow.document.documentElement
+    );
     
     // Trigger print dialog (user can save as PDF)
     printWindow.onload = () => {
@@ -1126,9 +1129,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const htmlContent = generateSingleWordPDFContent(wordData);
     
     const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.documentElement.innerHTML = htmlContent;
-    printWindow.document.close();
+    const parser = new DOMParser();
+    const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
+    printWindow.document.replaceChild(
+      printWindow.document.adoptNode(parsedDoc.documentElement),
+      printWindow.document.documentElement
+    );
     
     printWindow.onload = () => {
       printWindow.print();
@@ -1199,9 +1205,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const flashcardContent = generateFlashcardContent(wordData);
     
     const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.documentElement.innerHTML = flashcardContent;
-    printWindow.document.close();
+    const parser = new DOMParser();
+    const parsedDoc = parser.parseFromString(flashcardContent, 'text/html');
+    printWindow.document.replaceChild(
+      printWindow.document.adoptNode(parsedDoc.documentElement),
+      printWindow.document.documentElement
+    );
     
     printWindow.onload = () => {
       printWindow.print();
