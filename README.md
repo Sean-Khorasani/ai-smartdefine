@@ -1,6 +1,4 @@
-# SmartDefine Firefox Extension
-
-## Build Manual and Documentation
+# SmartDefine Browser Extension
 
 ### Table of Contents
 
