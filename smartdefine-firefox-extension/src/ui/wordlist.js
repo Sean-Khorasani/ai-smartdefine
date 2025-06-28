@@ -500,7 +500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const htmlContent = generatePDFContent(words);
     
     // Create a new window for PDF printing using safe DOM methods
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('about:blank', '_blank');
     const parser = new DOMParser();
     const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
     printWindow.document.replaceChild(
@@ -1128,7 +1128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportWordToPDF(wordData) {
     const htmlContent = generateSingleWordPDFContent(wordData);
     
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('about:blank', '_blank');
     const parser = new DOMParser();
     const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
     printWindow.document.replaceChild(
@@ -1204,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportWordAsFlashcard(wordData) {
     const flashcardContent = generateFlashcardContent(wordData);
     
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open('about:blank', '_blank');
     const parser = new DOMParser();
     const parsedDoc = parser.parseFromString(flashcardContent, 'text/html');
     printWindow.document.replaceChild(
