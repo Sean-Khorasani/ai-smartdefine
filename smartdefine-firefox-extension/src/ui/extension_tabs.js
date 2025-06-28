@@ -1073,23 +1073,24 @@ function generatePdfExport(wordsData, filename) {
         </div>
     `).join('')}
     
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const printBtn = document.getElementById('printBtn');
-            if (printBtn) {
-                printBtn.addEventListener('click', () => {
-                    window.print();
-                });
-            }
-        });
-    </script>
 </body>
 </html>`;
 
-  // Open new window with the content
-  const dataUrl = 'data:text/html;charset=utf-8,' +
-    encodeURIComponent(htmlContent);
-  window.open(dataUrl, '_blank');
+  // Open new window and write the content directly so scripts are allowed
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.addEventListener('load', () => {
+      const btn = printWindow.document.getElementById('printBtn');
+      if (btn) {
+        btn.addEventListener('click', () => printWindow.print());
+      }
+      printWindow.print();
+      setTimeout(() => printWindow.close(), 1000);
+    });
+  }
 }
 
 // Show add category modal
