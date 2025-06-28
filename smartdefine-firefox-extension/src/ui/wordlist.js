@@ -500,14 +500,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const htmlContent = generatePDFContent(words);
     
     // Create a new window for PDF printing using safe DOM methods
-    const printWindow = window.open('about:blank', '_blank');
-    const parser = new DOMParser();
-    const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
-    printWindow.document.replaceChild(
-      printWindow.document.adoptNode(parsedDoc.documentElement),
-      printWindow.document.documentElement
-    );
-    
+    const dataUrl = 'data:text/html;charset=utf-8,' +
+      encodeURIComponent(htmlContent);
+    const printWindow = window.open(dataUrl, '_blank');
+
     // Trigger print dialog (user can save as PDF)
     printWindow.onload = () => {
       printWindow.print();
@@ -1128,14 +1124,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportWordToPDF(wordData) {
     const htmlContent = generateSingleWordPDFContent(wordData);
     
-    const printWindow = window.open('about:blank', '_blank');
-    const parser = new DOMParser();
-    const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
-    printWindow.document.replaceChild(
-      printWindow.document.adoptNode(parsedDoc.documentElement),
-      printWindow.document.documentElement
-    );
-    
+    const dataUrl = 'data:text/html;charset=utf-8,' +
+      encodeURIComponent(htmlContent);
+    const printWindow = window.open(dataUrl, '_blank');
+
     printWindow.onload = () => {
       printWindow.print();
       setTimeout(() => printWindow.close(), 1000);
@@ -1203,15 +1195,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function exportWordAsFlashcard(wordData) {
     const flashcardContent = generateFlashcardContent(wordData);
-    
-    const printWindow = window.open('about:blank', '_blank');
-    const parser = new DOMParser();
-    const parsedDoc = parser.parseFromString(flashcardContent, 'text/html');
-    printWindow.document.replaceChild(
-      printWindow.document.adoptNode(parsedDoc.documentElement),
-      printWindow.document.documentElement
-    );
-    
+
+    const dataUrl = 'data:text/html;charset=utf-8,' +
+      encodeURIComponent(flashcardContent);
+    const printWindow = window.open(dataUrl, '_blank');
+
     printWindow.onload = () => {
       printWindow.print();
       setTimeout(() => printWindow.close(), 1000);

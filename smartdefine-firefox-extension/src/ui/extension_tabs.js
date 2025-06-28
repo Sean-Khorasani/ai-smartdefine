@@ -975,16 +975,10 @@ function generateFlashcardsExport(wordsData, filename) {
 </body>
 </html>`;
 
-  // Open new window with the flashcard content
-  const newWindow = window.open('about:blank', '_blank');
-  newWindow.document.open();
-  const parser = new DOMParser();
-  const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
-  newWindow.document.replaceChild(
-    newWindow.document.adoptNode(parsedDoc.documentElement),
-    newWindow.document.documentElement
-  );
-  newWindow.document.close();
+  // Open flashcards in a new tab using a data URL to avoid blank pages
+  const dataUrl =
+    'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+  window.open(dataUrl, '_blank');
 }
 
 // Generate JSON export
@@ -1082,16 +1076,10 @@ function generatePdfExport(wordsData, filename) {
 </body>
 </html>`;
 
-  // Open new window with the content
-  const newWindow = window.open('about:blank', '_blank');
-  newWindow.document.open();
-  const parser = new DOMParser();
-  const parsedDoc = parser.parseFromString(htmlContent, 'text/html');
-  newWindow.document.replaceChild(
-    newWindow.document.adoptNode(parsedDoc.documentElement),
-    newWindow.document.documentElement
-  );
-  newWindow.document.close();
+  // Open PDF in a new tab using a data URL so the content loads immediately
+  const dataUrl =
+    'data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent);
+  window.open(dataUrl, '_blank');
 }
 
 // Show add category modal
