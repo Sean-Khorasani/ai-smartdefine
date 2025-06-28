@@ -1056,7 +1056,7 @@ function generatePdfExport(wordsData, filename) {
         <h1>⚡ SmartDefine Word Export</h1>
         <p>Generated on ${new Date().toLocaleDateString()}</p>
         <p>Total words: ${wordsData.length}</p>
-        <button id="printBtn" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 15px;">
+        <button id="printBtn" onclick="window.print();" style="background: #4CAF50; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 15px;">
             🖨️ Print to PDF
         </button>
     </div>
@@ -1087,9 +1087,19 @@ function generatePdfExport(wordsData, filename) {
 </html>`;
 
   // Open new window with the content
-  const dataUrl = 'data:text/html;charset=utf-8,' +
-    encodeURIComponent(htmlContent);
-  window.open(dataUrl, '_blank');
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+
+  if (typeof browser !== 'undefined' && browser.tabs && browser.tabs.create) {
+    browser.tabs.create({ url }).then(() => {
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    });
+  } else {
+    const newWindow = window.open(url, '_blank');
+    if (newWindow) {
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  }
 }
 
 // Show add category modal

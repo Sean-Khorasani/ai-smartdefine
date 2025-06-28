@@ -498,20 +498,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportToPDF(words) {
     // Create a simple HTML document for PDF conversion
     const htmlContent = generatePDFContent(words);
-    
-    // Create a new window for PDF printing using safe DOM methods
 
-    const dataUrl = 'data:text/html;charset=utf-8,' +
-      encodeURIComponent(htmlContent);
-    const printWindow = window.open(dataUrl, '_blank');
-    
-    // Trigger print dialog (user can save as PDF)
-    printWindow.onload = () => {
-      printWindow.print();
-      // Close the window after a delay
-      setTimeout(() => printWindow.close(), 1000);
-    };
-    
+    // Use a Blob URL to avoid very long data URLs
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+
+    // Open window and trigger the print dialog once loaded
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+        setTimeout(() => printWindow.close(), 1000);
+      };
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
     showMessage('PDF export initiated! Use your browser\'s print dialog to save as PDF.', 'success');
   }
 
@@ -1125,14 +1126,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function exportWordToPDF(wordData) {
     const htmlContent = generateSingleWordPDFContent(wordData);
     
-    const dataUrl = 'data:text/html;charset=utf-8,' +
-      encodeURIComponent(htmlContent);
-    const printWindow = window.open(dataUrl, '_blank');
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
 
-    printWindow.onload = () => {
-      printWindow.print();
-      setTimeout(() => printWindow.close(), 1000);
-    };
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+        setTimeout(() => printWindow.close(), 1000);
+      };
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
     
     showMessage(`"${wordData.word}" PDF export initiated!`, 'success');
   }
