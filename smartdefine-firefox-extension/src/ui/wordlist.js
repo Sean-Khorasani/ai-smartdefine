@@ -312,7 +312,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!button) return;
 
     const wordItem = button.closest('.word-item');
-
     const wordId = button.dataset.id || wordItem?.dataset.id;
     const word = button.dataset.word || wordItem?.dataset.word;
     const category = button.dataset.category || wordItem?.dataset.category;
