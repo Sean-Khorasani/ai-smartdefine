@@ -52,12 +52,68 @@ function safeSetHTML(element, htmlString) {
   });
 }
 
+// Basic heuristic to detect base form, word type and other forms
+function getWordFormInfo(word) {
+  const lower = word.toLowerCase();
+  let base = lower;
+  let form = 'base form';
+  let type = 'unknown';
+
+  if (lower.endsWith('ing')) {
+    base = lower.slice(0, -3);
+    type = 'verb';
+    form = 'present participle';
+  } else if (lower.endsWith('ed')) {
+    base = lower.slice(0, -2);
+    type = 'verb';
+    form = 'past tense';
+  } else if (lower.endsWith('es')) {
+    base = lower.slice(0, -2);
+    type = 'verb/noun';
+    form = 'third-person singular or plural';
+  } else if (lower.endsWith('s') && lower.length > 3) {
+    base = lower.slice(0, -1);
+    type = 'verb/noun';
+    form = 'third-person singular or plural';
+  } else if (lower.endsWith('er')) {
+    base = lower.slice(0, -2);
+    type = 'adjective';
+    form = 'comparative';
+  } else if (lower.endsWith('est')) {
+    base = lower.slice(0, -3);
+    type = 'adjective';
+    form = 'superlative';
+  } else if (lower.endsWith('ly')) {
+    base = lower.slice(0, -2);
+    type = 'adverb';
+    form = 'adverb';
+  }
+
+  const forms = [];
+  if (type.startsWith('verb')) {
+    forms.push({ form: 'base', word: base, example: `to ${base}` });
+    forms.push({ form: '3rd person singular', word: base + 's', example: `He ${base}s.` });
+    forms.push({ form: 'past', word: base + 'ed', example: `They ${base}ed.` });
+    forms.push({ form: 'present participle', word: base + 'ing', example: `I am ${base}ing.` });
+  } else if (type === 'noun' || type === 'verb/noun') {
+    forms.push({ form: 'singular', word: base, example: `a ${base}` });
+    forms.push({ form: 'plural', word: base + 's', example: `many ${base}s` });
+    forms.push({ form: 'possessive', word: `${base}'s`, example: `${base}'s example` });
+  } else if (type === 'adjective') {
+    forms.push({ form: 'positive', word: base, example: `a ${base} thing` });
+    forms.push({ form: 'comparative', word: base + 'er', example: `a ${base}er thing` });
+    forms.push({ form: 'superlative', word: base + 'est', example: `the ${base}est thing` });
+  }
+
+  return { base, form, type, forms };
+}
+
 /**
  * Creates and displays a modal dialog with the LLM's formatted response.
  * @param {string} selectedText - The text the user selected.
  * @param {string} response - The response from the LLM.
  */
-async function createResponseModal(selectedText, response, context = null) {
+async function createResponseModal(selectedText, response, context = null, provider = null) {
   // Remove any existing modal to prevent duplicates
   const existingModal = document.getElementById('smartdefine-modal');
   if (existingModal) {
@@ -231,6 +287,21 @@ async function createResponseModal(selectedText, response, context = null) {
     flex-grow: 1; /* Allows content to fill available space */
   `;
 
+  // Word type and form information
+  const wordInfo = getWordFormInfo(selectedText);
+  const infoDiv = document.createElement('div');
+  infoDiv.style.cssText = 'margin-bottom: 16px;';
+  let infoHTML = `<strong>Word Type:</strong> ${wordInfo.type}<br><strong>Current Form:</strong> ${wordInfo.form}`;
+  if (wordInfo.forms.length > 0) {
+    infoHTML += '<br><strong>Other Forms:</strong><ul>';
+    wordInfo.forms.forEach(f => {
+      infoHTML += `<li>${f.word} (${f.form}) - ${f.example}</li>`;
+    });
+    infoHTML += '</ul>';
+  }
+  safeSetHTML(infoDiv, infoHTML);
+  contentArea.appendChild(infoDiv);
+
   // Parse and format the response using DOM methods
   const formattedContent = formatLLMResponse(response, selectedText);
   contentArea.appendChild(formattedContent);
@@ -318,7 +389,7 @@ async function createResponseModal(selectedText, response, context = null) {
       // Extract context for saving
       const learningSettings = await browser.storage.local.get(['learningSettings']);
       const context = learningSettings.learningSettings?.contextAwareDefinitions ? extractContext(selectedText) : null;
-      showSaveToListModal(selectedText, response, context);
+      showSaveToListModal(selectedText, response, context, provider);
     };
     
     header.appendChild(saveButton);
@@ -587,7 +658,7 @@ function formatLLMResponse(response, selectedWord) {
 
 
 // Save word to list functionality
-async function showSaveToListModal(word, explanation, context = null) {
+async function showSaveToListModal(word, explanation, context = null, provider = null) {
   // Remove any existing save modal
   const existingSaveModal = document.getElementById('smartdefine-save-modal');
   if (existingSaveModal) {
@@ -724,7 +795,7 @@ async function showSaveToListModal(word, explanation, context = null) {
       selectedCategory = 'General';
     }
     
-    await saveWordToList(word, explanation, selectedCategory, notesInput.value.trim(), context);
+    await saveWordToList(word, explanation, selectedCategory, notesInput.value.trim(), context, provider);
     saveModal.remove();
     
     // Show success message
@@ -740,7 +811,7 @@ async function showSaveToListModal(word, explanation, context = null) {
 }
 
 // Save word to storage
-async function saveWordToList(word, explanation, category, notes, context = null) {
+async function saveWordToList(word, explanation, category, notes, context = null, provider = null) {
   const storage = await browser.storage.local.get(['wordLists']);
   const wordLists = storage.wordLists || {};
   
@@ -748,11 +819,18 @@ async function saveWordToList(word, explanation, category, notes, context = null
     wordLists[category] = [];
   }
   
-  // Check if word already exists in this category
-  const existingIndex = wordLists[category].findIndex(item => item.word.toLowerCase() === word.toLowerCase());
+  const formInfo = getWordFormInfo(word);
+  const baseWord = formInfo.base;
+
+  // Check if word already exists in this category with same provider
+  const existingIndex = wordLists[category].findIndex(item =>
+    item.word.toLowerCase() === baseWord.toLowerCase() && item.provider === provider);
   
   const wordData = {
-    word: word,
+    word: baseWord,
+    originalForm: word,
+    provider: provider,
+    status: existingIndex >= 0 ? 'updated' : 'new',
     explanation: explanation,
     notes: notes,
     context: context, // Store context information
@@ -948,17 +1026,17 @@ browser.runtime.onMessage.addListener(async (message) => {
 
         if (response && typeof response === 'object') {
           console.log('LLM Response from', response.provider + ':', response.text);
-          createResponseModal(selectedText, response.text, context);
+          createResponseModal(selectedText, response.text, context, response.provider);
         } else {
           console.log('LLM Response:', response);
-          createResponseModal(selectedText, response, context);
+          createResponseModal(selectedText, response, context, null);
         }
       } else {
         // No API key configured, directly use free dictionary API
         console.log('No API key found, using free dictionary service');
         
         // Show loading message for dictionary lookup
-        createResponseModal(selectedText, "Loading definition from dictionary...");
+        createResponseModal(selectedText, "Loading definition from dictionary...", null, 'FreeDictionary');
         
         try {
           const dictionaryResponse = await browser.runtime.sendMessage({
@@ -969,11 +1047,11 @@ browser.runtime.onMessage.addListener(async (message) => {
           console.log('Dictionary Response:', dictionaryResponse);
 
           // Update modal with dictionary response
-          createResponseModal(selectedText, dictionaryResponse);
+          createResponseModal(selectedText, dictionaryResponse, null, 'FreeDictionary');
         } catch (dictError) {
           console.error('Dictionary API failed:', dictError);
           const errorMessage = `Unable to get definition for "${selectedText}". Dictionary service is unavailable. Please check your internet connection or configure an LLM API key for enhanced explanations.`;
-          createResponseModal(selectedText, errorMessage);
+          createResponseModal(selectedText, errorMessage, null, 'FreeDictionary');
         }
         return; // Exit early to prevent error handling
       }
@@ -994,11 +1072,11 @@ browser.runtime.onMessage.addListener(async (message) => {
         console.log('Dictionary Response:', fallbackResponse);
 
         // Update modal with dictionary response
-        createResponseModal(selectedText, fallbackResponse);
+        createResponseModal(selectedText, fallbackResponse, null, 'FreeDictionary');
       } catch (dictError) {
         console.error('Both LLM and dictionary APIs failed:', dictError);
         const errorMessage = `Unable to get explanation for "${selectedText}". Both AI service and dictionary lookup failed. Please check your internet connection or try again later.`;
-        createResponseModal(selectedText, errorMessage);
+        createResponseModal(selectedText, errorMessage, null, 'FreeDictionary');
       }
     }
   }
