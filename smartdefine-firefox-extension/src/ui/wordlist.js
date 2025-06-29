@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderCategoryTabs();
   renderWordList();
 
+  const wordListContainer = document.getElementById('wordList');
+
   // Event listeners
   document.getElementById('closeBtn').addEventListener('click', closeTab);
   document.getElementById('settingsBtn').addEventListener('click', openSettings);
@@ -19,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('practiceBtn').addEventListener('click', startPractice);
   document.getElementById('flashcardsBtn').addEventListener('click', startFlashcards);
   document.getElementById('exportAllBtn').addEventListener('click', exportAll);
+
+  // Delegate word action events once
+  wordListContainer.addEventListener('click', handleWordAction);
 
   // Load word lists from storage
   async function loadWordLists() {
@@ -298,8 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       wordListContainer.appendChild(wordItem);
     });
     
-    // Add event delegation for action buttons
-    wordListContainer.addEventListener('click', handleWordAction);
+    // Buttons are handled via a single delegated listener
   }
 
   // Handle word action button clicks
@@ -307,10 +311,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('.action-btn');
     if (!button) return;
 
-    const wordId = button.dataset.id;
-    const word = button.dataset.word;
-    const category = button.dataset.category;
-    const provider = button.dataset.provider || null;
+    const wordItem = button.closest('.word-item');
+    const wordId = button.dataset.id || wordItem?.dataset.id;
+    const word = button.dataset.word || wordItem?.dataset.word;
+    const category = button.dataset.category || wordItem?.dataset.category;
+    const provider = button.dataset.provider || wordItem?.dataset.provider || null;
     const action = button.dataset.action;
 
     if (!category || !action) return;
