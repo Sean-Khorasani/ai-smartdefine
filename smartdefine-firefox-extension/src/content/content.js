@@ -898,7 +898,9 @@ async function saveWordToList(word, explanation, category, notes, context = null
     originalForm: word,
     provider: provider,
     status: existingIndex >= 0 ? 'updated' : 'new',
+
     explanation: finalExplanation,
+
     notes: notes,
     context: context, // Store context information
     dateAdded: new Date().toISOString(),
