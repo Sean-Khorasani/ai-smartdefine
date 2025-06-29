@@ -52,21 +52,64 @@ function safeSetHTML(element, htmlString) {
   });
 }
 
+// Map of common irregular forms to their base forms
+const irregularVerbMap = {
+  'ate': 'eat',
+  'began': 'begin',
+  'begun': 'begin',
+  'bought': 'buy',
+  'caught': 'catch',
+  'came': 'come',
+  'done': 'do',
+  'drove': 'drive',
+  'driven': 'drive',
+  'fell': 'fall',
+  'felt': 'feel',
+  'found': 'find',
+  'flew': 'fly',
+  'gone': 'go',
+  'went': 'go',
+  'ran': 'run',
+  'saw': 'see',
+  'seen': 'see',
+  'was': 'be',
+  'were': 'be',
+  'been': 'be',
+  'wrote': 'write',
+  'written': 'write'
+};
+
 // Basic heuristic to detect base form, word type and other forms
-function getWordFormInfo(word) {
+async function getWordFormInfo(word) {
   const lower = word.toLowerCase().trim();
   let base = lower;
   let form = 'base form';
   let type = 'unknown';
 
-  if (lower.endsWith('ing')) {
+  // Check irregular forms first
+  if (irregularVerbMap[lower]) {
+    base = irregularVerbMap[lower];
+    type = 'verb';
+    form = 'past tense';
+  } else if (lower.endsWith('ied')) {
+    base = lower.slice(0, -3) + 'y';
+    type = 'verb';
+    form = 'past tense';
+  } else if (lower.endsWith('ed')) {
+    let candidate = lower.slice(0, -2);
+    if (lower.slice(0, -1) === candidate + 'e') {
+      base = candidate + 'e';
+    } else if (/([b-df-hj-np-tv-z])\1$/.test(candidate)) {
+      base = candidate.slice(0, -1);
+    } else {
+      base = candidate;
+    }
+    type = 'verb';
+    form = 'past tense';
+  } else if (lower.endsWith('ing')) {
     base = lower.slice(0, -3);
     type = 'verb';
     form = 'present participle';
-  } else if (lower.endsWith('ed')) {
-    base = lower.slice(0, -2);
-    type = 'verb';
-    form = 'past tense';
   } else if (lower.endsWith('es')) {
     base = lower.slice(0, -2);
     type = 'verb/noun';
@@ -83,10 +126,30 @@ function getWordFormInfo(word) {
     base = lower.slice(0, -3);
     type = 'adjective';
     form = 'superlative';
+  } else if (lower.endsWith('ically')) {
+    const cand1 = lower.slice(0, -4); // remove 'ally'
+    const cand2 = lower.slice(0, -2); // remove 'ly'
+    if (await dictionaryWordExists(cand1)) {
+      base = cand1;
+    } else if (await dictionaryWordExists(cand2)) {
+      base = cand2;
+    } else {
+      base = cand1;
+    }
+    type = 'adverb';
+    form = 'adverb';
   } else if (lower.endsWith('ly')) {
     base = lower.slice(0, -2);
     type = 'adverb';
     form = 'adverb';
+  }
+
+  // Try dictionary lookup for irregular words or if base still equals original
+  if (base === lower) {
+    const dictBase = await lookupBaseFromDictionary(lower);
+    if (dictBase) {
+      base = dictBase;
+    }
   }
 
   const forms = [];
@@ -108,9 +171,45 @@ function getWordFormInfo(word) {
   return { base, form, type, forms };
 }
 
+// Lookup base form from dictionary service using sourceUrls
+async function lookupBaseFromDictionary(word) {
+  try {
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data[0] && Array.isArray(data[0].sourceUrls)) {
+      for (const src of data[0].sourceUrls) {
+        const match = /\/wiki\/([^#]+)/.exec(src);
+        if (match) {
+          const candidate = match[1].toLowerCase();
+          if (candidate !== word.toLowerCase()) {
+            return candidate;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('lookupBaseFromDictionary error', err);
+  }
+  return null;
+}
+
+// Check if a word exists in the dictionary service
+async function dictionaryWordExists(word) {
+  try {
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+    const response = await fetch(url);
+    return response.ok;
+  } catch (err) {
+    console.warn('dictionaryWordExists error', err);
+    return false;
+  }
+}
+
 // Prepend word type and form information to an explanation if missing
-function addWordInfoToExplanation(word, explanation) {
-  const formInfo = getWordFormInfo(word);
+async function addWordInfoToExplanation(word, explanation) {
+  const formInfo = await getWordFormInfo(word);
   let finalExplanation = explanation.trim();
   if (!finalExplanation.toLowerCase().includes('word type')) {
     const infoLines = [`Word Type: ${formInfo.type}`, `Current Form: ${formInfo.form}`];
@@ -305,7 +404,7 @@ async function createResponseModal(selectedText, response, context = null, provi
   `;
 
   // Word type and form information
-  const wordInfo = getWordFormInfo(selectedText);
+  const wordInfo = await getWordFormInfo(selectedText);
   const infoDiv = document.createElement('div');
   infoDiv.style.cssText = 'margin-bottom: 16px;';
   let infoHTML = `<strong>Word Type:</strong> ${wordInfo.type}<br><strong>Current Form:</strong> ${wordInfo.form}`;
@@ -907,10 +1006,10 @@ async function saveWordToList(word, explanation, category, notes, context = null
     wordLists[category] = [];
   }
   
-  const formInfo = getWordFormInfo(word);
+  const formInfo = await getWordFormInfo(word);
   const baseWord = formInfo.base;
 
-  const finalExplanation = addWordInfoToExplanation(word, explanation);
+  const finalExplanation = await addWordInfoToExplanation(word, explanation);
 
   // Check if word already exists in this category with same provider
   const existingIndex = wordLists[category].findIndex(item =>
@@ -1352,17 +1451,17 @@ function showExportModal(selectedText, response) {
 }
 
 // Export to TXT function
-function exportToTXT(selectedText, response) {
-  const prepared = addWordInfoToExplanation(selectedText, response);
+async function exportToTXT(selectedText, response) {
+  const prepared = await addWordInfoToExplanation(selectedText, response);
   const content = `${selectedText}\n\n${cleanMarkdownText(prepared)}\n\nExported from SmartDefine Extension\nDate: ${new Date().toLocaleDateString()}`;
   downloadFile(content, `${selectedText}.txt`, 'text/plain');
   showMessage(`"${selectedText}" exported to TXT!`, 'success');
 }
 
 // Export to PDF function (downloads HTML file for printing to PDF)
-function exportToPDFContent(selectedText, response) {
+async function exportToPDFContent(selectedText, response) {
   try {
-    const htmlContent = generateSingleWordPDFContent(selectedText, response);
+    const htmlContent = await generateSingleWordPDFContent(selectedText, response);
     const filename = `${selectedText}_SmartDefine.html`;
     
     // Download as HTML file that can be opened and printed to PDF
@@ -1404,9 +1503,9 @@ function escapeHtml(text) {
 }
 
 // Generate PDF content for single word
-function generateSingleWordPDFContent(selectedText, response) {
+async function generateSingleWordPDFContent(selectedText, response) {
   try {
-    const prepared = addWordInfoToExplanation(selectedText, response);
+    const prepared = await addWordInfoToExplanation(selectedText, response);
     const cleanResponse = cleanMarkdownText(prepared) || 'No explanation available';
     const safeSelectedText = escapeHtml(selectedText);
     const safeCleanResponse = escapeHtml(cleanResponse);
