@@ -54,7 +54,6 @@ function safeSetHTML(element, htmlString) {
 
 // Basic heuristic to detect base form, word type and other forms
 function getWordFormInfo(word) {
-
   const lower = word.toLowerCase().trim();
   let base = lower;
   let form = 'base form';
@@ -645,41 +644,59 @@ function formatLLMResponse(response, selectedWord) {
   // Generate DOM elements for each section
   for (const key of displayOrder) {
     if (processedKeys.has(key) || !sections[key]) continue;
-    
+
     const displayTitle = sectionHeaders[key];
-    const isList = ['synonyms', 'antonyms', 'examples', 'collocations'].includes(key);
-    
+
+    // Determine if section should be rendered as a list
+    const defaultListSections = ['synonyms', 'antonyms', 'examples', 'collocations'];
+    const bulletRegex = /^[-*]\s+/;
+    const numberRegex = /^\d+\.\s*/;
+    let isList = defaultListSections.includes(key);
+    let isNumberList = false;
+
+    if (!isList) {
+      if (sections[key].every(line => numberRegex.test(line.trim()))) {
+        isList = true;
+        isNumberList = true;
+      } else if (sections[key].every(line => bulletRegex.test(line.trim()))) {
+        isList = true;
+      }
+    }
+
     // Create section header
     const header = createElement('h3', {
       style: 'font-size: 18px; font-weight: 600; color: #1a202c; margin-top: 24px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;'
     }, displayTitle);
     fragment.appendChild(header);
-    
+
     if (isList) {
-      const ul = createElement('ul', {
+      const listTag = isNumberList ? 'ol' : 'ul';
+      const listEl = createElement(listTag, {
         style: 'margin: 0 0 16px 0; padding-left: 20px; color: #4a5568;'
       });
-      
+
       sections[key].forEach(item => {
-        const cleanedItem = item.replace(/^(-|\*|\d+\.)\s*/, '').trim();
+        const cleanedItem = item.replace(bulletRegex, '').replace(numberRegex, '').trim();
         if (cleanedItem) {
           const li = createElement('li', {
             style: 'margin-bottom: 8px; line-height: 1.6; font-size: 16px; padding-left: 4px;'
           });
           li.appendChild(convertMarkdownToDOM(cleanedItem));
-          ul.appendChild(li);
+          listEl.appendChild(li);
         }
       });
-      fragment.appendChild(ul);
+      fragment.appendChild(listEl);
     } else {
       const p = createElement('p', {
         style: 'margin: 0 0 16px 0; color: #4a5568; line-height: 1.6; font-size: 16px;'
       });
-      const content = sections[key].join(' ');
-      p.appendChild(convertMarkdownToDOM(content));
+      sections[key].forEach((line, idx) => {
+        if (idx > 0) p.appendChild(createElement('br'));
+        p.appendChild(convertMarkdownToDOM(line.trim()));
+      });
       fragment.appendChild(p);
     }
-    
+
     processedKeys.add(key);
   }
 
@@ -860,6 +877,18 @@ async function saveWordToList(word, explanation, category, notes, context = null
   const formInfo = getWordFormInfo(word);
   const baseWord = formInfo.base;
 
+  let finalExplanation = explanation.trim();
+  if (!finalExplanation.toLowerCase().includes('word type')) {
+    let infoLines = [`Word Type: ${formInfo.type}`, `Current Form: ${formInfo.form}`];
+    if (formInfo.forms.length > 0) {
+      infoLines.push('Other Forms:');
+      formInfo.forms.forEach(f => {
+        infoLines.push(`- ${f.word} (${f.form}) - ${f.example}`);
+      });
+    }
+    finalExplanation = infoLines.join('\n') + '\n\n' + finalExplanation;
+  }
+
   // Check if word already exists in this category with same provider
   const existingIndex = wordLists[category].findIndex(item =>
     item.word.toLowerCase() === baseWord.toLowerCase() && item.provider === provider);
@@ -869,7 +898,9 @@ async function saveWordToList(word, explanation, category, notes, context = null
     originalForm: word,
     provider: provider,
     status: existingIndex >= 0 ? 'updated' : 'new',
-    explanation: explanation,
+
+    explanation: finalExplanation,
+
     notes: notes,
     context: context, // Store context information
     dateAdded: new Date().toISOString(),
