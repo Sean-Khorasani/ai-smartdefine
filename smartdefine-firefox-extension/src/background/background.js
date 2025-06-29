@@ -24,7 +24,7 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
 browser.runtime.onInstalled.addListener(() => {
   browser.storage.local.set({
     selectedProvider: "Together",
-    prompt: "Explain the word 'X_WORD_X' using EXACTLY this format with these exact headers. Do not skip any section:\n\n**Meaning:**\n[Clear definition of the word]\n\n**Respelling:**\n[Simplified phonetics like (en-KOM-pass-ing), not IPA]\n\n**Synonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Antonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Examples:**\n- Example sentence 1\n- Example sentence 2\n- Example sentence 3\n\n**Collocations:**\n- common phrase 1\n- common phrase 2\n- common phrase 3\n\n**Ways to remember:**\n- Memory aid or mnemonic device",
+    prompt: "Explain the word 'X_WORD_X' using EXACTLY this format with these exact headers. Do not skip any section:\n\n**Word Type:**\n[Its part of speech]\n\n**Current Form:**\n[Describe the grammatical form of the given word]\n\n**Other Forms:**\n- form1: example\n- form2: example\n\n**Meaning:**\n[Clear definition of the word]\n\n**Respelling:**\n[Simplified phonetics like (en-KOM-pass-ing), not IPA]\n\n**Synonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Antonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Examples:**\n- Example sentence 1\n- Example sentence 2\n- Example sentence 3\n\n**Collocations:**\n- common phrase 1\n- common phrase 2\n- common phrase 3\n\n**Ways to remember:**\n- Memory aid or mnemonic device",
     providers: {
       Together: {
         baseUrl: "https://api.together.xyz",
@@ -613,10 +613,8 @@ async function callFreeDictionaryAPI(word) {
 // Format dictionary API response to match LLM response format
 function formatDictionaryResponse(entry, originalWord) {
   let formattedResponse = '';
-  
-  // Header
-  formattedResponse += `**📖 Dictionary Definition for "${originalWord}"**\n\n`;
-  formattedResponse += `*(Powered by Free Dictionary API)*\n\n`;
+
+  // Mention source subtly at the end
   
   // Meaning section
   formattedResponse += `**Meaning:**\n`;

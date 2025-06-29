@@ -196,8 +196,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Create word item container
       const wordItem = document.createElement('div');
       wordItem.className = 'word-item';
+      if (word.id) wordItem.setAttribute('data-id', word.id);
       wordItem.setAttribute('data-word', word.word);
       wordItem.setAttribute('data-category', word.category);
+      if (word.provider) {
+        wordItem.setAttribute('data-provider', word.provider);
+      }
       
       // Create word content section
       const wordContent = document.createElement('div');
@@ -222,6 +226,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const categorySpan = document.createElement('span');
       categorySpan.textContent = `📂 ${word.category}`;
       wordMeta.appendChild(categorySpan);
+
+      const providerSpan = document.createElement('span');
+      providerSpan.textContent = `🔧 ${word.provider || 'Unknown'}`;
+      wordMeta.appendChild(providerSpan);
+
+      const statusSpan = document.createElement('span');
+      statusSpan.className = `status-badge status-${word.status || 'new'}`;
+      statusSpan.textContent = word.status || 'new';
+      wordMeta.appendChild(statusSpan);
       
       const difficultySpan = document.createElement('span');
       difficultySpan.className = `difficulty-badge ${difficultyClass}`;
@@ -250,22 +263,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const viewBtn = document.createElement('button');
       viewBtn.className = 'action-btn review';
+      if (word.id) viewBtn.setAttribute('data-id', word.id);
       viewBtn.setAttribute('data-word', word.word);
       viewBtn.setAttribute('data-category', word.category);
+      if (word.provider) viewBtn.setAttribute('data-provider', word.provider);
       viewBtn.setAttribute('data-action', 'view');
       viewBtn.textContent = '👁️ View';
       
       const exportBtn = document.createElement('button');
       exportBtn.className = 'action-btn export';
+      if (word.id) exportBtn.setAttribute('data-id', word.id);
       exportBtn.setAttribute('data-word', word.word);
       exportBtn.setAttribute('data-category', word.category);
+      if (word.provider) exportBtn.setAttribute('data-provider', word.provider);
       exportBtn.setAttribute('data-action', 'export');
       exportBtn.textContent = '📤 Export';
       
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'action-btn delete';
+      if (word.id) deleteBtn.setAttribute('data-id', word.id);
       deleteBtn.setAttribute('data-word', word.word);
       deleteBtn.setAttribute('data-category', word.category);
+      if (word.provider) deleteBtn.setAttribute('data-provider', word.provider);
       deleteBtn.setAttribute('data-action', 'delete');
       deleteBtn.textContent = '🗑️ Delete';
       
@@ -288,13 +307,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('.action-btn');
     if (!button) return;
 
+    const wordId = button.dataset.id;
     const word = button.dataset.word;
     const category = button.dataset.category;
+    const provider = button.dataset.provider || null;
     const action = button.dataset.action;
 
-    if (!word || !category || !action) return;
+    if (!category || !action) return;
 
-    const wordData = wordLists[category]?.find(w => w.word === word);
+    let wordData = null;
+    if (wordId) {
+      const list = wordLists[category] || [];
+      wordData = list.find(w => w.id === wordId);
+    }
+    if (!wordData) {
+      wordData = wordLists[category]?.find(w => w.word === word && w.provider === provider);
+    }
+    if (!wordData) {
+      wordData = wordLists[category]?.find(w => w.word === word);
+    }
     if (!wordData) {
       showMessage('Word not found!', 'error');
       return;
@@ -322,7 +353,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'delete':
         if (confirm(`Are you sure you want to delete "${word}" from ${category}?`)) {
-          const index = wordLists[category].findIndex(w => w.word === word);
+          let index = -1;
+          if (wordId) {
+            index = wordLists[category].findIndex(w => w.id === wordId);
+          }
+          if (index === -1) {
+            index = wordLists[category].findIndex(w => w.word === word && w.provider === provider);
+          }
           if (index !== -1) {
             wordLists[category].splice(index, 1);
             
@@ -838,10 +875,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     reviewIcon.textContent = '🔁';
     reviewSpan.appendChild(reviewIcon);
     reviewSpan.appendChild(document.createTextNode(`${wordData.reviewCount || 0} reviews`));
-    
+
+    const providerSpan = document.createElement('span');
+    providerSpan.style.cssText = 'display: flex; align-items: center; gap: 6px;';
+    const providerIcon = document.createElement('span');
+    providerIcon.style.fontSize = '16px';
+    providerIcon.textContent = '🔧';
+    providerSpan.appendChild(providerIcon);
+    providerSpan.appendChild(document.createTextNode(wordData.provider || 'Unknown'));
+
     metaInfo.appendChild(categorySpan);
     metaInfo.appendChild(dateSpan);
     metaInfo.appendChild(reviewSpan);
+    metaInfo.appendChild(providerSpan);
     header.appendChild(metaInfo);
     
     content.appendChild(header);
