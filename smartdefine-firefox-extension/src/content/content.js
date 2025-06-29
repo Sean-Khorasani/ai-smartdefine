@@ -718,7 +718,6 @@ function formatLLMResponse(response, selectedWord) {
         li.appendChild(convertMarkdownToDOM(text));
         listEl.appendChild(li);
       });
-
       fragment.appendChild(listEl);
     } else {
       const p = createElement('p', {
