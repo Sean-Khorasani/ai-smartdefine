@@ -222,6 +222,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const categorySpan = document.createElement('span');
       categorySpan.textContent = `📂 ${word.category}`;
       wordMeta.appendChild(categorySpan);
+
+      if (word.provider) {
+        const providerSpan = document.createElement('span');
+        providerSpan.textContent = `🔧 ${word.provider}`;
+        wordMeta.appendChild(providerSpan);
+      }
+
+      const statusSpan = document.createElement('span');
+      statusSpan.className = `status-badge status-${word.status || 'new'}`;
+      statusSpan.textContent = word.status || 'new';
+      wordMeta.appendChild(statusSpan);
       
       const difficultySpan = document.createElement('span');
       difficultySpan.className = `difficulty-badge ${difficultyClass}`;
