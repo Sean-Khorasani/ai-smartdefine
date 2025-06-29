@@ -108,6 +108,23 @@ function getWordFormInfo(word) {
   return { base, form, type, forms };
 }
 
+// Prepend word type and form information to an explanation if missing
+function addWordInfoToExplanation(word, explanation) {
+  const formInfo = getWordFormInfo(word);
+  let finalExplanation = explanation.trim();
+  if (!finalExplanation.toLowerCase().includes('word type')) {
+    const infoLines = [`Word Type: ${formInfo.type}`, `Current Form: ${formInfo.form}`];
+    if (formInfo.forms.length > 0) {
+      infoLines.push('Other Forms:');
+      formInfo.forms.forEach(f => {
+        infoLines.push(`- ${f.word} (${f.form}) - ${f.example}`);
+      });
+    }
+    finalExplanation = infoLines.join('\n') + '\n\n' + finalExplanation;
+  }
+  return finalExplanation;
+}
+
 /**
  * Creates and displays a modal dialog with the LLM's formatted response.
  * @param {string} selectedText - The text the user selected.
@@ -655,10 +672,12 @@ function formatLLMResponse(response, selectedWord) {
     let isNumberList = false;
 
     if (!isList) {
-      if (sections[key].every(line => numberRegex.test(line.trim()))) {
+      const numberMatches = sections[key].filter(line => numberRegex.test(line.trim())).length;
+      const bulletMatches = sections[key].filter(line => bulletRegex.test(line.trim())).length;
+      if (numberMatches > 0 && numberMatches >= bulletMatches) {
         isList = true;
         isNumberList = true;
-      } else if (sections[key].every(line => bulletRegex.test(line.trim()))) {
+      } else if (bulletMatches > 0) {
         isList = true;
       }
     }
@@ -675,15 +694,29 @@ function formatLLMResponse(response, selectedWord) {
         style: 'margin: 0 0 16px 0; padding-left: 20px; color: #4a5568;'
       });
 
-      sections[key].forEach(item => {
-        const cleanedItem = item.replace(bulletRegex, '').replace(numberRegex, '').trim();
-        if (cleanedItem) {
-          const li = createElement('li', {
-            style: 'margin-bottom: 8px; line-height: 1.6; font-size: 16px; padding-left: 4px;'
-          });
-          li.appendChild(convertMarkdownToDOM(cleanedItem));
-          listEl.appendChild(li);
+      const items = [];
+      let current = null;
+      sections[key].forEach(line => {
+        const trimmed = line.trim();
+        if ((isNumberList && numberRegex.test(trimmed)) || (!isNumberList && bulletRegex.test(trimmed))) {
+          if (current) items.push(current);
+          current = trimmed.replace(bulletRegex, '').replace(numberRegex, '').trim();
+        } else {
+          if (current) {
+            current += ' ' + trimmed;
+          } else {
+            current = trimmed;
+          }
         }
+      });
+      if (current) items.push(current);
+
+      items.forEach(text => {
+        const li = createElement('li', {
+          style: 'margin-bottom: 8px; line-height: 1.6; font-size: 16px; padding-left: 4px;'
+        });
+        li.appendChild(convertMarkdownToDOM(text));
+        listEl.appendChild(li);
       });
       fragment.appendChild(listEl);
     } else {
@@ -877,17 +910,7 @@ async function saveWordToList(word, explanation, category, notes, context = null
   const formInfo = getWordFormInfo(word);
   const baseWord = formInfo.base;
 
-  let finalExplanation = explanation.trim();
-  if (!finalExplanation.toLowerCase().includes('word type')) {
-    let infoLines = [`Word Type: ${formInfo.type}`, `Current Form: ${formInfo.form}`];
-    if (formInfo.forms.length > 0) {
-      infoLines.push('Other Forms:');
-      formInfo.forms.forEach(f => {
-        infoLines.push(`- ${f.word} (${f.form}) - ${f.example}`);
-      });
-    }
-    finalExplanation = infoLines.join('\n') + '\n\n' + finalExplanation;
-  }
+  const finalExplanation = addWordInfoToExplanation(word, explanation);
 
   // Check if word already exists in this category with same provider
   const existingIndex = wordLists[category].findIndex(item =>
@@ -898,9 +921,7 @@ async function saveWordToList(word, explanation, category, notes, context = null
     originalForm: word,
     provider: provider,
     status: existingIndex >= 0 ? 'updated' : 'new',
-
     explanation: finalExplanation,
-
     notes: notes,
     context: context, // Store context information
     dateAdded: new Date().toISOString(),
@@ -1327,7 +1348,8 @@ function showExportModal(selectedText, response) {
 
 // Export to TXT function
 function exportToTXT(selectedText, response) {
-  const content = `${selectedText}\n\n${cleanMarkdownText(response)}\n\nExported from SmartDefine Extension\nDate: ${new Date().toLocaleDateString()}`;
+  const prepared = addWordInfoToExplanation(selectedText, response);
+  const content = `${selectedText}\n\n${cleanMarkdownText(prepared)}\n\nExported from SmartDefine Extension\nDate: ${new Date().toLocaleDateString()}`;
   downloadFile(content, `${selectedText}.txt`, 'text/plain');
   showMessage(`"${selectedText}" exported to TXT!`, 'success');
 }
@@ -1379,7 +1401,8 @@ function escapeHtml(text) {
 // Generate PDF content for single word
 function generateSingleWordPDFContent(selectedText, response) {
   try {
-    const cleanResponse = cleanMarkdownText(response) || 'No explanation available';
+    const prepared = addWordInfoToExplanation(selectedText, response);
+    const cleanResponse = cleanMarkdownText(prepared) || 'No explanation available';
     const safeSelectedText = escapeHtml(selectedText);
     const safeCleanResponse = escapeHtml(cleanResponse);
     
