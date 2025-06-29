@@ -196,6 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Create word item container
       const wordItem = document.createElement('div');
       wordItem.className = 'word-item';
+      if (word.id) wordItem.setAttribute('data-id', word.id);
       wordItem.setAttribute('data-word', word.word);
       wordItem.setAttribute('data-category', word.category);
       if (word.provider) {
@@ -262,6 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const viewBtn = document.createElement('button');
       viewBtn.className = 'action-btn review';
+      if (word.id) viewBtn.setAttribute('data-id', word.id);
       viewBtn.setAttribute('data-word', word.word);
       viewBtn.setAttribute('data-category', word.category);
       if (word.provider) viewBtn.setAttribute('data-provider', word.provider);
@@ -270,6 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const exportBtn = document.createElement('button');
       exportBtn.className = 'action-btn export';
+      if (word.id) exportBtn.setAttribute('data-id', word.id);
       exportBtn.setAttribute('data-word', word.word);
       exportBtn.setAttribute('data-category', word.category);
       if (word.provider) exportBtn.setAttribute('data-provider', word.provider);
@@ -278,6 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const deleteBtn = document.createElement('button');
       deleteBtn.className = 'action-btn delete';
+      if (word.id) deleteBtn.setAttribute('data-id', word.id);
       deleteBtn.setAttribute('data-word', word.word);
       deleteBtn.setAttribute('data-category', word.category);
       if (word.provider) deleteBtn.setAttribute('data-provider', word.provider);
@@ -303,16 +307,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('.action-btn');
     if (!button) return;
 
+    const wordId = button.dataset.id;
     const word = button.dataset.word;
     const category = button.dataset.category;
     const provider = button.dataset.provider || null;
     const action = button.dataset.action;
 
-    if (!word || !category || !action) return;
+    if (!category || !action) return;
 
-    let wordData = wordLists[category]?.find(w => w.word === word && w.provider === provider);
+    let wordData = null;
+    if (wordId) {
+      const list = wordLists[category] || [];
+      wordData = list.find(w => w.id === wordId);
+    }
     if (!wordData) {
-      // Fallback to match without provider (for older entries)
+      wordData = wordLists[category]?.find(w => w.word === word && w.provider === provider);
+    }
+    if (!wordData) {
       wordData = wordLists[category]?.find(w => w.word === word);
     }
     if (!wordData) {
@@ -342,7 +353,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
       case 'delete':
         if (confirm(`Are you sure you want to delete "${word}" from ${category}?`)) {
-          const index = wordLists[category].findIndex(w => w.word === word && w.provider === provider);
+          let index = -1;
+          if (wordId) {
+            index = wordLists[category].findIndex(w => w.id === wordId);
+          }
+          if (index === -1) {
+            index = wordLists[category].findIndex(w => w.word === word && w.provider === provider);
+          }
           if (index !== -1) {
             wordLists[category].splice(index, 1);
             

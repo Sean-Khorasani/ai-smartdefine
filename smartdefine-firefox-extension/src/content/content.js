@@ -916,7 +916,12 @@ async function saveWordToList(word, explanation, category, notes, context = null
   const existingIndex = wordLists[category].findIndex(item =>
     item.word.toLowerCase() === baseWord.toLowerCase() && item.provider === provider);
   
+  const wordId = existingIndex >= 0
+    ? wordLists[category][existingIndex].id
+    : (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+
   const wordData = {
+    id: wordId,
     word: baseWord,
     originalForm: word,
     provider: provider,
