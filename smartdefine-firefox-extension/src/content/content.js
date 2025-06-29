@@ -54,6 +54,7 @@ function safeSetHTML(element, htmlString) {
 
 // Basic heuristic to detect base form, word type and other forms
 function getWordFormInfo(word) {
+
   const lower = word.toLowerCase().trim();
   let base = lower;
   let form = 'base form';
