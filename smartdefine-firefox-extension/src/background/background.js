@@ -613,10 +613,8 @@ async function callFreeDictionaryAPI(word) {
 // Format dictionary API response to match LLM response format
 function formatDictionaryResponse(entry, originalWord) {
   let formattedResponse = '';
-  
-  // Header
-  formattedResponse += `**📖 Dictionary Definition for "${originalWord}"**\n\n`;
-  formattedResponse += `*(Powered by Free Dictionary API)*\n\n`;
+
+  // Mention source subtly at the end
   
   // Meaning section
   formattedResponse += `**Meaning:**\n`;

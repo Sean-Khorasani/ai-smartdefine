@@ -54,7 +54,8 @@ function safeSetHTML(element, htmlString) {
 
 // Basic heuristic to detect base form, word type and other forms
 function getWordFormInfo(word) {
-  const lower = word.toLowerCase();
+
+  const lower = word.toLowerCase().trim();
   let base = lower;
   let form = 'base form';
   let type = 'unknown';
@@ -559,6 +560,18 @@ function formatLLMResponse(response, selectedWord) {
     'respelling': 'Respelling (Simplified Phonetics)',
     'phonetics': 'Phonetics',
     'pronunciation': 'Respelling (Simplified Phonetics)',
+    'noun': 'Noun',
+    'verb': 'Verb',
+    'adjective': 'Adjective',
+    'adverb': 'Adverb',
+    'pronoun': 'Pronoun',
+    'preposition': 'Preposition',
+    'conjunction': 'Conjunction',
+    'interjection': 'Interjection',
+    'determiner': 'Determiner',
+    'article': 'Article',
+    'etymology': 'Etymology',
+    'origin': 'Etymology',
     'synonyms': 'Synonyms',
     'antonyms': 'Antonyms',
     'examples': 'Examples',
@@ -601,7 +614,32 @@ function formatLLMResponse(response, selectedWord) {
   }
 
   // Define the display order
-  const displayOrder = ['meaning', 'definition', 'respelling', 'phonetics', 'pronunciation', 'synonyms', 'antonyms', 'examples', 'collocations', 'memory aid', 'ways to remember', 'memory'];
+  const displayOrder = [
+    'meaning',
+    'definition',
+    'respelling',
+    'phonetics',
+    'pronunciation',
+    'noun',
+    'verb',
+    'adjective',
+    'adverb',
+    'pronoun',
+    'preposition',
+    'conjunction',
+    'interjection',
+    'determiner',
+    'article',
+    'synonyms',
+    'antonyms',
+    'examples',
+    'collocations',
+    'etymology',
+    'origin',
+    'memory aid',
+    'ways to remember',
+    'memory'
+  ];
   const processedKeys = new Set();
 
   // Generate DOM elements for each section
