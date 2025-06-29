@@ -1,35 +1,453 @@
-# SmartDefine Extension
+# 🧠 SmartDefine - AI-Powered Vocabulary Learning Extension
 
-## Overview
-SmartDefine provides AI-powered definitions and explanations inside your browser. Right-click any selection on a web page and the extension displays an in-page modal with contextual information, word forms, and ways to remember the word. Explanations come from one of two LLM providers or, if those fail, a free dictionary API.
+> Transform any webpage into a language learning opportunity with intelligent definitions, spaced repetition, and comprehensive vocabulary management.
 
-## Usage
-1. Select a word on any webpage.
-2. Right-click and choose **SmartDefine**.
-3. A modal appears with a formatted explanation and options to save or export the word.
+[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-blue?logo=google-chrome)](chrome-extension-link)
+[![Firefox Addon](https://img.shields.io/badge/Firefox-Addon-orange?logo=firefox)](firefox-addon-link)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 
-### Word List & Exports
-- Save words into custom categories with personal notes.
-- Export individual words to TXT, printable PDF, or flashcard HTML.
-- Export full word lists to TXT, CSV, JSON, PDF, or interactive flashcards.
+## 📋 Table of Contents
 
-### Practice Modes
-- Flashcard, quiz, and typing practice modes available in the extension tabs.
-- Words become available for review based on a spaced repetition algorithm.
-- Daily reminders and an overdue badge help keep track of study goals.
+- [✨ Key Features](#-key-features)
+- [🚀 Installation](#-installation)
+- [💡 Usage Guide](#-usage-guide)
+- [⚙️ Configuration](#️-configuration)
+- [🎯 Learning System](#-learning-system)
+- [📤 Export Options](#-export-options)
+- [🔧 Advanced Features](#-advanced-features)
+- [🌐 Browser Compatibility](#-browser-compatibility)
+- [🛠️ Developer Documentation](#️-developer-documentation)
+- [🤝 Contributing](#-contributing)
+- [🐛 Troubleshooting](#-troubleshooting)
+- [📄 License](#-license)
 
-## Settings
-Settings are managed from the **Settings** tab in `extension_tabs.html`:
-- **Providers** – Configure API key, base URL, model, and enable state for Together.ai or OpenRouter.
-- **Prompt** – Template containing the `X_WORD_X` placeholder used to request explanations.
-- **Learning Settings** – Toggles for context-aware definitions, automatic saving, showing a save button, review reminders, and daily goal value.
+## ✨ Key Features
 
-### Learning Engine
-- Implements a spaced repetition algorithm similar to SM‑2.
-- Calculates next review interval, ease factor, and difficulty level.
-- Tracks performance history and provides study statistics such as overdue words or daily reviews.
-- Schedules alarms for daily review reminders and badge updates.
-- Falls back to the free dictionary API when LLM providers fail.
+### 🔍 **Instant Definitions**
+- **Right-click any word** on any webpage for immediate explanations
+- **AI-powered contextual definitions** that understand word usage in context
+- **Fallback to free dictionary** when LLM providers are unavailable
+- **Multiple pronunciation guides** with phonetic respelling
+- **Etymology and word forms** for comprehensive understanding
+
+### 🧠 **Smart Learning Engine**
+- **Spaced Repetition Algorithm** (SM-2 based) for optimal retention
+- **Adaptive difficulty adjustment** based on your performance
+- **Performance tracking** with detailed statistics
+- **Daily study goals** and progress monitoring
+- **Review scheduling** with smart reminders
+
+### 📚 **Vocabulary Management**
+- **Custom categories** for organizing words by topic, difficulty, or source
+- **Personal notes** and custom definitions
+- **Bulk operations** for efficient word management
+- **Search and filter** capabilities across your entire vocabulary
+- **Import/export** functionality for data portability
+
+### 🎮 **Interactive Practice Modes**
+- **Flashcard Mode**: Traditional spaced repetition cards
+- **Quiz Mode**: Multiple choice and fill-in-the-blank questions
+- **Typing Practice**: Improve spelling and muscle memory
+- **Audio Practice**: Pronunciation and listening exercises (if supported)
+
+### 📊 **Advanced Analytics**
+- **Study streaks** and consistency tracking
+- **Difficulty progression** over time
+- **Review success rates** and performance trends
+- **Time-based analytics** for optimal study scheduling
+- **Word frequency analysis** from your reading habits
+
+## 🚀 Installation
+
+### Chrome Web Store (Recommended)
+1. Visit the [Chrome Web Store page](chrome-extension-link)
+2. Click "Add to Chrome"
+3. Confirm installation in the popup
+4. Pin the extension for easy access
+
+### Firefox Add-ons (Recommended)
+1. Visit the [Firefox Add-ons page](firefox-addon-link)
+2. Click "Add to Firefox"
+3. Confirm installation in the popup
+4. Access via the extensions menu
+
+### Manual Installation (Development)
+
+#### Chrome/Edge:
+1. Download or clone this repository
+2. Open `chrome://extensions/` in Chrome
+3. Enable "Developer mode" (top right toggle)
+4. Click "Load unpacked"
+5. Select the `smartdefine-chrome-extension` folder
+6. Extension will appear in your toolbar
+
+#### Firefox:
+1. Download or clone this repository
+2. Open `about:debugging` in Firefox
+3. Click "This Firefox"
+4. Click "Load Temporary Add-on"
+5. Select the `manifest.json` file in `smartdefine-firefox-extension` folder
+
+## 💡 Usage Guide
+
+### Basic Usage
+1. **Browse any webpage** with text content
+2. **Select a word or phrase** you want to understand
+3. **Right-click** and choose "SmartDefine: [selected text]"
+4. **View the definition** in the modal popup
+5. **Save the word** to your vocabulary list (optional)
+
+### Advanced Usage
+
+#### Context-Aware Definitions
+- SmartDefine analyzes the surrounding text to provide definitions that match the word's usage in context
+- Enable "Context-aware definitions" in settings for more accurate explanations
+
+#### Batch Word Collection
+- Enable "Auto-save" to automatically add looked-up words to your vocabulary
+- Use custom categories to organize words by topic or reading source
+- Add personal notes to remember why you encountered each word
+
+#### Study Sessions
+1. Open the extension popup or full interface
+2. Navigate to the "Practice" tab
+3. Choose your preferred practice mode
+4. Set study duration or word count goals
+5. Review words due for practice
+
+## ⚙️ Configuration
+
+### LLM Provider Setup
+
+#### Together.ai Configuration
+1. Sign up at [Together.ai](https://api.together.xyz)
+2. Obtain your API key from the dashboard
+3. In SmartDefine settings:
+   - Set "Provider" to "Together"
+   - Enter your API key
+   - Select your preferred model (default: `meta-llama/Llama-3-70b-chat-hf`)
+   - Enable the provider
+
+#### OpenRouter Configuration
+1. Create account at [OpenRouter](https://openrouter.ai)
+2. Generate an API key
+3. In SmartDefine settings:
+   - Set "Provider" to "OpenRouter"
+   - Enter your API key
+   - Select your preferred model (default: `google/gemini-flash-1.5`)
+   - Enable the provider
+
+### Custom Prompts
+Customize how definitions are generated by modifying the prompt template:
+- Use `X_WORD_X` as placeholder for the selected word
+- Include specific formatting instructions
+- Add context requirements or style preferences
+
+Example custom prompt:
+```
+Explain the word 'X_WORD_X' in simple terms suitable for language learners:
+
+**Definition:** [Clear, simple explanation]
+**Usage:** [How it's commonly used]
+**Example:** [Sample sentence]
+**Synonyms:** [2-3 similar words]
+**Memory tip:** [Helpful way to remember]
+```
+
+### Learning Settings
+- **Daily Goal**: Set target words to review per day
+- **Review Reminders**: Enable browser notifications
+- **Auto-save**: Automatically add looked-up words
+- **Show Save Button**: Display save option in definition modal
+- **Context Awareness**: Use surrounding text for better definitions
+
+## 🎯 Learning System
+
+### Spaced Repetition Algorithm
+SmartDefine implements an enhanced version of the SM-2 algorithm:
+
+#### How It Works
+1. **Initial Learning**: New words start with short intervals (1-3 days)
+2. **Success Tracking**: Correct answers increase intervals exponentially
+3. **Difficulty Adjustment**: Mistakes reset intervals and lower ease factor
+4. **Long-term Retention**: Well-known words can have intervals of months or years
+
+#### Performance Metrics
+- **Ease Factor**: Measures how "easy" a word is for you (1.3-2.5 scale)
+- **Streak**: Consecutive correct reviews
+- **Success Rate**: Percentage of correct answers over time
+- **Response Time**: Average time to answer (affects difficulty)
+
+#### Study Modes
+- **Due Reviews**: Words scheduled for today
+- **New Words**: Recently added, unreviewed vocabulary
+- **Difficult Words**: Items with low ease factors
+- **Overdue**: Missed review sessions
+
+## 📤 Export Options
+
+### Individual Word Exports
+- **Text (.txt)**: Simple word and definition
+- **PDF**: Formatted document with pronunciation and examples
+- **Flashcard HTML**: Interactive web-based flashcards
+
+### Bulk Exports
+- **CSV**: Spreadsheet format for analysis or import to other tools
+- **JSON**: Complete data structure with all metadata
+- **PDF Report**: Comprehensive vocabulary report with statistics
+- **Anki Format**: Import directly into Anki spaced repetition software
+
+### Export Customization
+- Choose specific categories or date ranges
+- Include/exclude personal notes and statistics
+- Select data fields for CSV exports
+- Generate study-ready formats
+
+## 🔧 Advanced Features
+
+### Keyboard Shortcuts
+- `Alt+D`: Quick lookup of selected text
+- `Alt+S`: Open vocabulary management
+- `Alt+P`: Start practice session
+
+### Context Menu Options
+- **SmartDefine**: Standard definition lookup
+- **Add to Category**: Quick save to specific word list
+- **Practice Mode**: Immediate quiz on selected word
+
+### Browser Integration
+- **Reading Mode**: Optimized for article reading
+- **Study Mode**: Highlights difficult words automatically
+- **Progress Tracking**: Syncs with browser bookmarks and reading history
+
+### API Fallback System
+1. **Primary LLM Provider** (Together.ai or OpenRouter)
+2. **Secondary LLM Provider** (if first fails)
+3. **Free Dictionary API** (always available backup)
+4. **Offline Mode** (cached definitions)
+
+## 🌐 Browser Compatibility
+
+### Supported Browsers
+- ✅ **Chrome** 88+ (Manifest V3)
+- ✅ **Edge** 88+ (Chromium-based)
+- ✅ **Firefox** 109+ (Manifest V2)
+- ✅ **Opera** 74+ (Chromium-based)
+- ⚠️ **Safari** (planned support)
+
+### Platform Support
+- ✅ **Windows** 10/11
+- ✅ **macOS** 10.15+
+- ✅ **Linux** (All major distributions)
+- ⚠️ **Mobile** (limited functionality)
+
+## 🛠️ Developer Documentation
+
+### Project Structure
+```
+smartdefine/
+├── smartdefine-chrome-extension/     # Chrome/Edge version (Manifest V3)
+│   ├── manifest.json                 # Extension manifest
+│   ├── service-worker.js              # Background service worker
+│   ├── src/
+│   │   ├── background/                # Background scripts
+│   │   │   ├── background.js          # Main background logic
+│   │   │   └── learning-engine.js     # Spaced repetition engine
+│   │   ├── content/
+│   │   │   └── content.js             # Content script for web pages
+│   │   ├── ui/                        # User interface components
+│   │   │   ├── popup.html/js          # Extension popup
+│   │   │   ├── extension_tabs.html/js # Main interface
+│   │   │   ├── practice.html/js       # Practice modes
+│   │   │   └── wordlist.html/js       # Vocabulary management
+│   │   └── browser-polyfill.js        # Cross-browser compatibility
+│   └── icons/                         # Extension icons
+├── smartdefine-firefox-extension/     # Firefox version (Manifest V2)
+│   └── [Similar structure]
+├── README.md                          # This file
+└── CLAUDE.md                          # Development session notes
+```
+
+### Architecture Overview
+
+#### Background Scripts
+- **Service Worker** (Chrome) / **Background Page** (Firefox)
+- **Learning Engine**: Implements spaced repetition algorithms
+- **API Management**: Handles LLM provider communications
+- **Storage Management**: Manages user data and settings
+
+#### Content Scripts
+- **Definition Modal**: In-page popup for word explanations
+- **Context Detection**: Analyzes surrounding text for better definitions
+- **User Interaction**: Handles text selection and context menu integration
+
+#### User Interface
+- **Popup Interface**: Quick access to core features
+- **Full Extension Tabs**: Comprehensive vocabulary and practice interface
+- **Practice Modes**: Interactive learning components
+
+### Development Setup
+
+#### Prerequisites
+- Node.js 16+ (for development tools, optional)
+- Modern web browser for testing
+- Text editor with JavaScript support
+
+#### Getting Started
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/smartdefine-extension.git
+   cd smartdefine-extension
+   ```
+
+2. **Load extension for development**
+   - Follow manual installation instructions above
+   - Enable "Developer mode" in browser
+   - Use "Reload" button after making changes
+
+3. **Development workflow**
+   - Edit source files in `src/` directories
+   - Reload extension in browser
+   - Test on various websites
+   - Check browser console for errors
+
+#### Key Development Files
+- `src/background/background.js`: Main extension logic
+- `src/content/content.js`: Web page interaction
+- `src/background/learning-engine.js`: Learning algorithm
+- `manifest.json`: Extension configuration
+
+### API Integration
+
+#### LLM Provider Requirements
+- **Authentication**: API key-based
+- **Request Format**: JSON with text and optional context
+- **Response Format**: Plain text or structured markdown
+- **Rate Limiting**: Respectful usage patterns
+
+#### Adding New Providers
+1. Add provider configuration in `background.js`
+2. Implement provider-specific request formatting
+3. Add error handling and fallback logic
+4. Update settings UI with new options
+
+### Testing
+
+#### Manual Testing Checklist
+- [ ] Context menu appears on text selection
+- [ ] Definition modal displays correctly
+- [ ] Word saving and categorization works
+- [ ] Practice modes function properly
+- [ ] Export features generate correct files
+- [ ] Settings persist across browser restarts
+
+#### Cross-browser Testing
+- Test on multiple browsers and versions
+- Verify Manifest V2 (Firefox) vs V3 (Chrome) compatibility
+- Check permissions and API usage
+- Validate UI rendering across platforms
+
+### Performance Considerations
+- **Lazy Loading**: UI components load on demand
+- **Efficient Storage**: Minimize data storage overhead
+- **Service Worker Lifecycle**: Handle worker dormancy gracefully
+- **Memory Management**: Clean up event listeners and objects
+
+## 🤝 Contributing
+
+### How to Contribute
+1. **Fork the repository** on GitHub
+2. **Create a feature branch**: `git checkout -b feature-name`
+3. **Make your changes** following the coding standards
+4. **Test thoroughly** across supported browsers
+5. **Submit a pull request** with clear description
+
+### Coding Standards
+- **JavaScript**: ES6+ syntax, consistent formatting
+- **HTML/CSS**: Semantic markup, responsive design
+- **Documentation**: Clear comments for complex logic
+- **Commit Messages**: Descriptive, following conventional commits
+
+### Areas for Contribution
+- 🌍 **Localization**: Translate interface to new languages
+- 🎨 **UI/UX**: Improve design and user experience
+- 🧠 **Learning Algorithms**: Enhance spaced repetition logic
+- 📱 **Mobile Support**: Optimize for mobile browsers
+- 🔌 **API Integrations**: Add support for new LLM providers
+- 🧪 **Testing**: Expand automated testing coverage
+
+### Bug Reports
+Please include:
+- Browser version and operating system
+- Extension version
+- Steps to reproduce the issue
+- Expected vs actual behavior
+- Console error messages (if any)
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Context Menu Not Appearing
+- **Solution**: Reload the extension in browser settings
+- **Check**: Extension permissions are granted
+- **Verify**: Extension is enabled and not conflicting with other extensions
+
+#### Definitions Not Loading
+- **Check**: Internet connection is stable
+- **Verify**: API keys are correctly configured (if using LLM providers)
+- **Try**: Using free dictionary mode as fallback
+- **Clear**: Extension storage and reconfigure settings
+
+#### Practice Mode Not Working
+- **Ensure**: Words are saved in vocabulary list
+- **Check**: Learning settings are properly configured
+- **Verify**: Browser allows extension notifications (for reminders)
+
+#### Export Features Failing
+- **Check**: Browser download permissions
+- **Verify**: Sufficient storage space
+- **Try**: Exporting smaller word sets
+- **Clear**: Browser cache and try again
+
+### Performance Issues
+- **Reduce**: Number of words in active vocabulary
+- **Disable**: Auto-save if causing slowdowns
+- **Check**: Browser memory usage
+- **Update**: Browser to latest version
+
+### Data Recovery
+- **Backup**: Export vocabulary regularly
+- **Sync**: Enable browser sync for settings
+- **Import**: Previous exports to restore data
+- **Contact**: Support for assistance with data recovery
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Third-Party Licenses
+- **Browser Polyfill**: Mozilla Public License 2.0
+- **Icons**: Creative Commons Attribution 4.0
+- **Fonts**: SIL Open Font License 1.1
 
 ---
+
+## 🙏 Acknowledgments
+
+- **Mozilla** for the browser polyfill library
+- **SM-2 Algorithm** creators for the spaced repetition foundation
+- **Open Source Community** for inspiration and feedback
+- **Beta Testers** for valuable bug reports and suggestions
+
+---
+
+<div align="center">
+
+**Made with ❤️ for language learners worldwide**
+
+[Report Bug](https://github.com/your-username/smartdefine-extension/issues) • [Request Feature](https://github.com/your-username/smartdefine-extension/issues) • [Documentation](https://github.com/your-username/smartdefine-extension/wiki)
+
+</div>
 

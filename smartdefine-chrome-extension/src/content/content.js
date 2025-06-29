@@ -1066,8 +1066,35 @@ function extractSentence(text, selectedIndex, selectedLength) {
   }
 }
 
+// Content script loaded
+console.log('SmartDefine content script loaded on:', window.location.href);
+
+// Add a visual indicator that content script is loaded (for debugging)
+const debugIndicator = document.createElement('div');
+debugIndicator.id = 'smartdefine-debug-indicator';
+debugIndicator.style.cssText = `
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+  height: 10px;
+  background: green;
+  border-radius: 50%;
+  z-index: 999999;
+  pointer-events: none;
+`;
+debugIndicator.title = 'SmartDefine content script loaded';
+document.body?.appendChild(debugIndicator);
+
+// Remove the indicator after 3 seconds
+setTimeout(() => {
+  debugIndicator?.remove();
+}, 3000);
+
 // Listen for messages from background script
-browser.runtime.onMessage.addListener(async (message) => {
+browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  console.log('Content script received message:', message);
+  
   if (message.command === "explainSelectedText") {
     const selectedText = message.text;
     
@@ -1174,7 +1201,13 @@ browser.runtime.onMessage.addListener(async (message) => {
         createResponseModal(selectedText, errorMessage, null, 'FreeDictionary');
       }
     }
+    
+    // Send response back to background script
+    sendResponse({ success: true });
   }
+  
+  // Return true to indicate we will respond asynchronously
+  return true;
 });
 
 // Export Modal Function

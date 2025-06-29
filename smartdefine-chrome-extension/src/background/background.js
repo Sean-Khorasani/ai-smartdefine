@@ -1,6 +1,8 @@
 // src/background/background.js
 
+// Initialize extension on install
 browser.runtime.onInstalled.addListener(() => {
+  // Create context menu
   browser.contextMenus.create({
     id: "explain-me",
     title: "SmartDefine: '%s'",
@@ -9,19 +11,8 @@ browser.runtime.onInstalled.addListener(() => {
   
   // Initialize learning engine background tasks
   initializeLearningEngine();
-});
-
-browser.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "explain-me") {
-    browser.tabs.sendMessage(tab.id, {
-      command: "explainSelectedText",
-      text: info.selectionText
-    });
-  }
-});
-
-// Initialize default settings
-browser.runtime.onInstalled.addListener(() => {
+  
+  // Initialize default settings
   browser.storage.local.set({
     selectedProvider: "Together",
     prompt: "Explain the word 'X_WORD_X' using EXACTLY this format with these exact headers. Do not skip any section:\n\n**Word Type:**\n[Its part of speech]\n\n**Current Form:**\n[Describe the grammatical form of the given word]\n\n**Other Forms:**\n- form1: example\n- form2: example\n\n**Meaning:**\n[Clear definition of the word]\n\n**Respelling:**\n[Simplified phonetics like (en-KOM-pass-ing), not IPA]\n\n**Synonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Antonyms:**\n- word1 (pronunciation)\n- word2 (pronunciation)\n- word3 (pronunciation)\n\n**Examples:**\n- Example sentence 1\n- Example sentence 2\n- Example sentence 3\n\n**Collocations:**\n- common phrase 1\n- common phrase 2\n- common phrase 3\n\n**Ways to remember:**\n- Memory aid or mnemonic device",
@@ -54,6 +45,44 @@ browser.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Handle context menu clicks
+browser.contextMenus.onClicked.addListener(async (info, tab) => {
+  console.log('Context menu clicked!', {
+    menuItemId: info.menuItemId,
+    selectionText: info.selectionText,
+    tabId: tab.id,
+    tabUrl: tab.url
+  });
+  
+  if (info.menuItemId === "explain-me") {
+    try {
+      console.log('Sending message to content script...');
+      const response = await browser.tabs.sendMessage(tab.id, {
+        command: "explainSelectedText",
+        text: info.selectionText
+      });
+      console.log('Message sent successfully, response:', response);
+    } catch (error) {
+      console.error('Failed to send message to content script:', error);
+      // Try to inject content script if it's not already injected
+      console.log('Attempting to inject content script...');
+      try {
+        await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['src/browser-polyfill.js', 'src/content/content.js']
+        });
+        console.log('Content script injected, retrying message...');
+        const retryResponse = await browser.tabs.sendMessage(tab.id, {
+          command: "explainSelectedText",
+          text: info.selectionText
+        });
+        console.log('Retry successful, response:', retryResponse);
+      } catch (injectError) {
+        console.error('Failed to inject content script:', injectError);
+      }
+    }
+  }
+});
 
 // Function to call different LLM APIs with fallback when one fails
 async function callLLMAPI(selectedText, context, settings) {
@@ -305,19 +334,25 @@ async function updateOverdueBadge() {
 }
 
 // Enhanced message handler for learning features  
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  try {
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Background received message:', message.command);
+  
+  // Handle async operations properly
+  (async () => {
+    try {
     // API call handlers
     if (message.command === "callLLMAPI") {
       try {
         const response = await callLLMAPI(message.text, message.context, message.settings);
-        return response;
+        sendResponse(response);
+        return;
       } catch (error) {
         // If LLM API fails, try free dictionary API as fallback
         console.warn('LLM API failed, trying dictionary fallback:', error.message);
         try {
           const dictionaryResponse = await callFreeDictionaryAPI(message.text);
-          return dictionaryResponse;
+          sendResponse(dictionaryResponse);
+          return;
         } catch (dictError) {
           throw new Error(`Both LLM and dictionary APIs failed. LLM: ${error.message}, Dictionary: ${dictError.message}`);
         }
@@ -326,14 +361,16 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     
     if (message.command === "callFreeDictionaryAPI") {
       const response = await callFreeDictionaryAPI(message.text);
-      return response;
+      sendResponse(response);
+      return;
     }
     
     if (message.command === "openOptions") {
       await browser.tabs.create({
         url: browser.runtime.getURL('src/ui/extension_tabs.html?tab=settings')
       });
-      return { success: true };
+      sendResponse({ success: true });
+      return;
     }
     
     // Learning engine commands
@@ -342,7 +379,8 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         message.wordData, 
         message.reviewResult
       );
-      return { success: true, wordData: updatedWordData };
+      sendResponse({ success: true, wordData: updatedWordData });
+      return;
     }
     
     if (message.command === "getWordsForReview" && learningEngine) {
@@ -352,23 +390,34 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         message.reviewType || 'all',
         message.limit || 20
       );
-      return { success: true, words: dueWords };
+      sendResponse({ success: true, words: dueWords });
+      return;
     }
     
     if (message.command === "getStudyStats" && learningEngine) {
       const storage = await browser.storage.local.get(['wordLists']);
       const stats = learningEngine.getStudyStats(storage.wordLists || {});
-      return { success: true, stats };
+      sendResponse({ success: true, stats });
+      return;
     }
     
     if (message.command === "updateOverdueBadge") {
       await updateOverdueBadge();
-      return { success: true };
+      sendResponse({ success: true });
+      return;
     }
+    
+    // Unknown command
+    sendResponse({ error: `Unknown command: ${message.command}` });
+    
   } catch (error) {
     console.error(`Error handling command ${message.command}:`, error);
-    throw error;
+    sendResponse({ error: error.message });
   }
+  })();
+  
+  // Return true to indicate we will respond asynchronously
+  return true;
 });
 
 // Basic Learning Engine with Spaced Repetition

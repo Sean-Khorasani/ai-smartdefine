@@ -480,7 +480,10 @@ class PerformanceTracker {
 // Export the learning engine
 if (typeof module !== 'undefined') {
   module.exports = { LearningEngine };
-} else {
+} else if (typeof window !== 'undefined') {
   // Browser environment
   window.LearningEngine = LearningEngine;
+} else {
+  // Service worker environment
+  globalThis.LearningEngine = LearningEngine;
 }

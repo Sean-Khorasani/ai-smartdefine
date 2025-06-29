@@ -5,19 +5,24 @@
   "name": "SmartDefine",
   "version": "1.0",
   "description": "Get LLM-powered definitions and explanations for selected words.",
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png"
+  },
   "permissions": [
     "contextMenus",
     "storage",
     "alarms",
     "notifications",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "src/background/service-worker.js"
+    "service_worker": "service-worker.js"
   },
   "content_scripts": [
     {
@@ -26,6 +31,9 @@
     }
   ],
   "action": {
+    "default_icon": {
+      "48": "icons/icon-48.png"
+    },
     "default_title": "SmartDefine Settings",
     "default_popup": "src/ui/popup.html"
   }
