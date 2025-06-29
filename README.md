@@ -10,7 +10,6 @@
 ## 📋 Table of Contents
 
 - [✨ Key Features](#-key-features)
-- [🚀 Installation](#-installation)
 - [💡 Usage Guide](#-usage-guide)
 - [⚙️ Configuration](#️-configuration)
 - [🎯 Learning System](#-learning-system)
@@ -57,37 +56,6 @@
 - **Review success rates** and performance trends
 - **Time-based analytics** for optimal study scheduling
 - **Word frequency analysis** from your reading habits
-
-## 🚀 Installation
-
-### Chrome Web Store (Recommended)
-1. Visit the [Chrome Web Store page](chrome-extension-link)
-2. Click "Add to Chrome"
-3. Confirm installation in the popup
-4. Pin the extension for easy access
-
-### Firefox Add-ons (Recommended)
-1. Visit the [Firefox Add-ons page](firefox-addon-link)
-2. Click "Add to Firefox"
-3. Confirm installation in the popup
-4. Access via the extensions menu
-
-### Manual Installation (Development)
-
-#### Chrome/Edge:
-1. Download or clone this repository
-2. Open `chrome://extensions/` in Chrome
-3. Enable "Developer mode" (top right toggle)
-4. Click "Load unpacked"
-5. Select the `smartdefine-chrome-extension` folder
-6. Extension will appear in your toolbar
-
-#### Firefox:
-1. Download or clone this repository
-2. Open `about:debugging` in Firefox
-3. Click "This Firefox"
-4. Click "Load Temporary Add-on"
-5. Select the `manifest.json` file in `smartdefine-firefox-extension` folder
 
 ## 💡 Usage Guide
 
