@@ -126,6 +126,18 @@ async function getWordFormInfo(word) {
     base = lower.slice(0, -3);
     type = 'adjective';
     form = 'superlative';
+  } else if (lower.endsWith('ically')) {
+    const cand1 = lower.slice(0, -4); // remove 'ally'
+    const cand2 = lower.slice(0, -2); // remove 'ly'
+    if (await dictionaryWordExists(cand1)) {
+      base = cand1;
+    } else if (await dictionaryWordExists(cand2)) {
+      base = cand2;
+    } else {
+      base = cand1;
+    }
+    type = 'adverb';
+    form = 'adverb';
   } else if (lower.endsWith('ly')) {
     base = lower.slice(0, -2);
     type = 'adverb';
@@ -181,6 +193,18 @@ async function lookupBaseFromDictionary(word) {
     console.warn('lookupBaseFromDictionary error', err);
   }
   return null;
+}
+
+// Check if a word exists in the dictionary service
+async function dictionaryWordExists(word) {
+  try {
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`;
+    const response = await fetch(url);
+    return response.ok;
+  } catch (err) {
+    console.warn('dictionaryWordExists error', err);
+    return false;
+  }
 }
 
 // Prepend word type and form information to an explanation if missing
