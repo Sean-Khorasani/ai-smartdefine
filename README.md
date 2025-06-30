@@ -221,8 +221,7 @@ smartdefine/
 │   │   ├── ui/                        # User interface components
 │   │   │   ├── popup.html/js          # Extension popup
 │   │   │   ├── extension_tabs.html/js # Main interface
-│   │   │   ├── practice.html/js       # Practice modes
-│   │   │   └── wordlist.html/js       # Vocabulary management
+│   │   │   └── practice.html/js       # Practice modes
 │   │   └── browser-polyfill.js        # Cross-browser compatibility
 │   └── icons/                         # Extension icons
 ├── smartdefine-firefox-extension/     # Firefox version (Manifest V2)
