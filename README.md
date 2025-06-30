@@ -373,17 +373,10 @@ Please include:
 - **Try**: Exporting smaller word sets
 - **Clear**: Browser cache and try again
 
-### Performance Issues
-- **Reduce**: Number of words in active vocabulary
-- **Disable**: Auto-save if causing slowdowns
-- **Check**: Browser memory usage
-- **Update**: Browser to latest version
-
 ### Data Recovery
 - **Backup**: Export vocabulary regularly
 - **Sync**: Enable browser sync for settings
 - **Import**: Previous exports to restore data
-- **Contact**: Support for assistance with data recovery
 
 ## 📄 License
 
