@@ -227,8 +227,7 @@ smartdefine/
 │   └── icons/                         # Extension icons
 ├── smartdefine-firefox-extension/     # Firefox version (Manifest V2)
 │   └── [Similar structure]
-├── README.md                          # This file
-└── CLAUDE.md                          # Development session notes
+└── README.md                          # This file
 ```
 
 ### Architecture Overview
