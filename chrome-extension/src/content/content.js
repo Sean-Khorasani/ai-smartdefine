@@ -2818,6 +2818,177 @@ setTimeout(() => {
   debugIndicator?.remove();
 }, 3000);
 
+// Show first-run popup with pin instructions
+async function showFirstRunPopup(selectedText) {
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 2147483650;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease-out;
+  `;
+
+  // Create popup content
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 30px;
+    border-radius: 16px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideIn 0.3s ease-out;
+  `;
+
+  // Add CSS animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { transform: translateY(-20px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Create content
+  popup.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">🧩</div>
+      <h2 style="margin: 0 0 16px 0; color: #2c3e50; font-size: 24px; font-weight: 600;">
+        Welcome to SmartDefine!
+      </h2>
+      <p style="margin: 0 0 20px 0; color: #4a5568; font-size: 16px; line-height: 1.6;">
+        To keep this extension handy, click the <strong>puzzle piece (🧩)</strong> in your browser toolbar (Extensions menu) and <strong>pin SmartDefine</strong>.
+      </p>
+      <p style="margin: 0 0 24px 0; color: #718096; font-size: 14px;">
+        This lets you access SmartDefine with one click whenever you need word definitions!
+      </p>
+    </div>
+    <button id="smartdefine-first-run-ok" style="
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+    ">
+      Got it!
+    </button>
+  `;
+
+  // Add hover effect for button
+  const button = popup.querySelector('#smartdefine-first-run-ok');
+  button.onmouseover = () => {
+    button.style.transform = 'translateY(-1px)';
+    button.style.boxShadow = '0 4px 8px rgba(76, 175, 80, 0.4)';
+  };
+  button.onmouseout = () => {
+    button.style.transform = 'translateY(0)';
+    button.style.boxShadow = '0 2px 4px rgba(76, 175, 80, 0.3)';
+  };
+
+  // Close on button click and continue with word definition
+  button.onclick = async () => {
+    modal.remove();
+    style.remove();
+    
+    // Continue with word definition
+    if (selectedText) {
+      await continueWithWordDefinition(selectedText);
+    }
+  };
+
+  // Close on outside click
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      modal.remove();
+      style.remove();
+    }
+  };
+
+  // Add to page
+  modal.appendChild(popup);
+  document.body.appendChild(modal);
+}
+
+// Continue with word definition after first-run popup
+async function continueWithWordDefinition(selectedText) {
+  try {
+    // Get settings from storage
+    const settings = await browser.storage.local.get(["selectedProvider", "prompt", "providers", "learningSettings"]);
+    
+    const hasAPIKey = Object.values(settings.providers || {}).some(p => p.enabled && p.apiKey && p.apiKey.trim().length > 0);
+    
+    if (hasAPIKey) {
+      // Show loading message immediately only if we have an API key
+      await createResponseModal(selectedText, "Loading explanation...");
+      
+      // Extract context around the selected text only if enabled
+      const learningSettings = settings.learningSettings || {};
+      const context = learningSettings.contextAwareDefinitions ? extractContext(selectedText) : null;
+
+      // Call LLM API
+      const response = await browser.runtime.sendMessage({
+        command: "callLLMAPI",
+        text: selectedText,
+        context: context,
+        settings: settings
+      });
+
+      if (response && response.text) {
+        await createResponseModal(selectedText, response.text, context, response.provider);
+      } else {
+        throw new Error('No response from LLM API');
+      }
+    } else {
+      // Try dictionary API
+      await createResponseModal(selectedText, "Loading definition from dictionary...");
+      
+      const response = await browser.runtime.sendMessage({
+        command: "callFreeDictionaryAPI",
+        text: selectedText
+      });
+
+      if (response) {
+        await createResponseModal(selectedText, response, null, 'Dictionary');
+      } else {
+        throw new Error('No response from dictionary API');
+      }
+    }
+  } catch (error) {
+    console.error('Error in continueWithWordDefinition:', error);
+    let errorMessage = 'Unable to get definition for "' + selectedText + '".';
+    
+    if (error.message.includes('Both LLM and dictionary APIs failed')) {
+      errorMessage = 'This word was not found in the dictionary (it may be a proper noun, technical term, or very specialized word). Please try setting up an API key for better results.';
+    } else if (error.message.includes('Word') && error.message.includes('not found')) {
+      errorMessage = 'This word was not found in the dictionary (it may be a proper noun, technical term, or very specialized word). Please try setting up an API key for better results.';
+    }
+    
+    await createResponseModal(selectedText, errorMessage);
+  }
+}
+
 // Listen for messages from background script
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   console.log('Content script received message:', message);
@@ -2826,6 +2997,14 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     const rawSelectedText = message.text;
     const selectedText = await extractFirstValidWord(rawSelectedText);
     
+    // Check for first-run and show pin instructions
+    const firstRunCheck = await browser.storage.local.get(['isFirstRun']);
+    if (firstRunCheck.isFirstRun) {
+      await showFirstRunPopup(selectedText);
+      // Clear the first-run flag
+      await browser.storage.local.set({ isFirstRun: false });
+      return;
+    }
     
     // Get settings from storage
     const settings = await browser.storage.local.get(["selectedProvider", "prompt", "providers", "learningSettings"]);

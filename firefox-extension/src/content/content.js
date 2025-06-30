@@ -2612,6 +2612,221 @@ function extractSentence(text, selectedIndex, selectedLength) {
   }
 }
 
+// Show first-run popup with pin extension instructions
+function showFirstRunPopup(selectedText) {
+  // Remove any existing popup
+  const existingPopup = document.getElementById('smartdefine-first-run-popup');
+  if (existingPopup) {
+    existingPopup.remove();
+  }
+
+  // Create popup container
+  const popup = createElement('div', {
+    id: 'smartdefine-first-run-popup',
+    style: `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 1000001;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 480px;
+      min-width: 360px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    `
+  });
+
+  // Create content
+  const title = createElement('h2', {
+    style: `
+      margin: 0 0 16px 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: white;
+    `
+  }, '🎉 Welcome to SmartDefine!');
+
+  const message = createElement('p', {
+    style: `
+      margin: 0 0 24px 0;
+      font-size: 16px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.9);
+    `
+  }, 'To keep this extension handy, click the puzzle piece (Extensions menu) and pin SmartDefine.');
+
+  const illustration = createElement('div', {
+    style: `
+      margin: 20px 0;
+      font-size: 48px;
+      opacity: 0.8;
+    `
+  }, '🧩📌');
+
+  const buttonContainer = createElement('div', {
+    style: `
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 24px;
+    `
+  });
+
+  const gotItButton = createElement('button', {
+    style: `
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    `
+  }, 'Got it!');
+
+  // Add hover effects
+  gotItButton.addEventListener('mouseenter', () => {
+    gotItButton.style.background = '#f8f9ff';
+    gotItButton.style.transform = 'translateY(-1px)';
+  });
+
+  gotItButton.addEventListener('mouseleave', () => {
+    gotItButton.style.background = 'white';
+    gotItButton.style.transform = 'translateY(0)';
+  });
+
+  // Event listeners
+  gotItButton.addEventListener('click', async () => {
+    popup.remove();
+    overlay.remove();
+    
+    // Continue with word definition
+    if (selectedText) {
+      await continueWithWordDefinition(selectedText);
+    }
+  });
+
+  // Close on escape key
+  document.addEventListener('keydown', function escapeHandler(e) {
+    if (e.key === 'Escape') {
+      popup.remove();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  });
+
+  // Create overlay
+  const overlay = createElement('div', {
+    style: `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000000;
+      backdrop-filter: blur(4px);
+    `
+  });
+
+  overlay.addEventListener('click', () => {
+    popup.remove();
+    overlay.remove();
+  });
+
+  // Assemble popup
+  buttonContainer.appendChild(gotItButton);
+  popup.appendChild(title);
+  popup.appendChild(message);
+  popup.appendChild(illustration);
+  popup.appendChild(buttonContainer);
+
+  // Add to page
+  document.body.appendChild(overlay);
+  document.body.appendChild(popup);
+
+  // Animate in
+  popup.style.opacity = '0';
+  popup.style.transform = 'translate(-50%, -50%) scale(0.9)';
+  overlay.style.opacity = '0';
+
+  requestAnimationFrame(() => {
+    popup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    overlay.style.transition = 'opacity 0.3s ease';
+    popup.style.opacity = '1';
+    popup.style.transform = 'translate(-50%, -50%) scale(1)';
+    overlay.style.opacity = '1';
+  });
+}
+
+// Continue with word definition after first-run popup
+async function continueWithWordDefinition(selectedText) {
+  try {
+    // Get settings from storage
+    const settings = await browser.storage.local.get(["selectedProvider", "prompt", "providers", "learningSettings"]);
+    
+    const hasAPIKey = Object.values(settings.providers || {}).some(p => p.enabled && p.apiKey && p.apiKey.trim().length > 0);
+    
+    // Show loading message immediately only if we have an API key
+    if (hasAPIKey) {
+      await createResponseModal(selectedText, "Loading explanation...");
+    }
+
+    if (hasAPIKey) {
+      // Extract context around the selected text only if enabled
+      const learningSettings = settings.learningSettings || {};
+      const context = learningSettings.contextAwareDefinitions ? extractContext(selectedText) : null;
+
+      // Call LLM API
+      const response = await browser.runtime.sendMessage({
+        command: "callLLMAPI",
+        text: selectedText,
+        context: context,
+        settings: settings
+      });
+
+      if (response && response.text) {
+        await createResponseModal(selectedText, response.text, context, response.provider);
+      } else {
+        throw new Error('No response from LLM API');
+      }
+    } else {
+      // Try dictionary API
+      await createResponseModal(selectedText, "Loading definition from dictionary...");
+      
+      const response = await browser.runtime.sendMessage({
+        command: "callFreeDictionaryAPI",
+        text: selectedText
+      });
+
+      if (response) {
+        await createResponseModal(selectedText, response, null, 'Dictionary');
+      } else {
+        throw new Error('No response from dictionary API');
+      }
+    }
+  } catch (error) {
+    console.error('Error in continueWithWordDefinition:', error);
+    let errorMessage = 'Unable to get definition for "' + selectedText + '".';
+    
+    if (error.message.includes('Both LLM and dictionary APIs failed')) {
+      errorMessage = 'This word was not found in the dictionary (it may be a proper noun, technical term, or very specialized word). Please try setting up an API key for better results.';
+    } else if (error.message.includes('Word') && error.message.includes('not found')) {
+      errorMessage = 'This word was not found in the dictionary (it may be a proper noun, technical term, or very specialized word). Please try setting up an API key for better results.';
+    }
+    
+    await createResponseModal(selectedText, errorMessage);
+  }
+}
+
 // Listen for messages from background script
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   console.log('Content script received message:', message);
@@ -2619,6 +2834,15 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.command === "explainSelectedText") {
     const rawSelectedText = message.text;
     const selectedText = await extractFirstValidWord(rawSelectedText);
+    
+    // Check for first-run popup
+    const firstRunStorage = await browser.storage.local.get(['isFirstRun']);
+    if (firstRunStorage.isFirstRun) {
+      showFirstRunPopup(selectedText);
+      // Clear the flag so it doesn't show again
+      await browser.storage.local.set({ isFirstRun: false });
+      return;
+    }
     
     
     // Get settings from storage

@@ -1,14 +1,23 @@
 // src/background/background.js
 
-browser.runtime.onInstalled.addListener(() => {
+browser.runtime.onInstalled.addListener((details) => {
   browser.contextMenus.create({
-    id: "explain-me",
+    id: "smartdefine-word",
     title: "SmartDefine: '%s'",
     contexts: ["selection"]
   });
   
   // Initialize learning engine background tasks
   initializeLearningEngine();
+  
+  // Handle first installation
+  if (details.reason === 'install') {
+    // Set first-run flag
+    browser.storage.local.set({
+      isFirstRun: true
+    });
+    console.log('SmartDefine: First installation detected, will show pin instructions on first use');
+  }
 });
 
 browser.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -19,7 +28,7 @@ browser.contextMenus.onClicked.addListener(async (info, tab) => {
     tabUrl: tab.url
   });
   
-  if (info.menuItemId === "explain-me") {
+  if (info.menuItemId === "smartdefine-word") {
     await sendMessageToContentScript(tab.id, info.selectionText);
   }
 });
