@@ -174,11 +174,6 @@ SmartDefine implements an enhanced version of the SM-2 algorithm:
 
 ## 🔧 Advanced Features
 
-### Keyboard Shortcuts
-- `Alt+D`: Quick lookup of selected text
-- `Alt+S`: Open vocabulary management
-- `Alt+P`: Start practice session
-
 ### Context Menu Options
 - **SmartDefine**: Standard definition lookup
 - **Add to Category**: Quick save to specific word list
@@ -202,7 +197,6 @@ SmartDefine implements an enhanced version of the SM-2 algorithm:
 - ✅ **Edge** 88+ (Chromium-based)
 - ✅ **Firefox** 109+ (Manifest V2)
 - ✅ **Opera** 74+ (Chromium-based)
-- ⚠️ **Safari** (planned support)
 
 ### Platform Support
 - ✅ **Windows** 10/11
@@ -412,8 +406,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-
-**Made with ❤️ for language learners worldwide**
 
 [Report Bug](https://github.com/your-username/smartdefine-extension/issues) • [Request Feature](https://github.com/your-username/smartdefine-extension/issues) • [Documentation](https://github.com/your-username/smartdefine-extension/wiki)
 
