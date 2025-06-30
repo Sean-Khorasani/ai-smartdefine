@@ -1,4 +1,4 @@
-# 🧠 SmartDefine - AI-Powered Vocabulary Learning Extension
+# SmartDefine - AI-Powered English Vocabulary Learning Extension
 
 > Transform any webpage into a language learning opportunity with intelligent definitions, spaced repetition, and comprehensive vocabulary management.
 
