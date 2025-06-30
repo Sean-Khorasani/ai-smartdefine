@@ -398,9 +398,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-<div align="center">
-
-[Report Bug](https://github.com/your-username/smartdefine-extension/issues) • [Request Feature](https://github.com/your-username/smartdefine-extension/issues) • [Documentation](https://github.com/your-username/smartdefine-extension/wiki)
-
-</div>
-
