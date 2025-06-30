@@ -209,8 +209,8 @@ SmartDefine implements an enhanced version of the SM-2 algorithm:
 ### Project Structure
 ```
 smartdefine/
-├── smartdefine-chrome-extension/     # Chrome/Edge version (Manifest V3)
-│   ├── manifest.json                 # Extension manifest
+├── chrome-extension/                  # Chrome/Edge version (Manifest V3)
+│   ├── manifest.json                  # Extension manifest
 │   ├── service-worker.js              # Background service worker
 │   ├── src/
 │   │   ├── background/                # Background scripts
@@ -224,7 +224,7 @@ smartdefine/
 │   │   │   └── practice.html/js       # Practice modes
 │   │   └── browser-polyfill.js        # Cross-browser compatibility
 │   └── icons/                         # Extension icons
-├── smartdefine-firefox-extension/     # Firefox version (Manifest V2)
+├── firefox-extension/                 # Firefox version (Manifest V2)
 │   └── [Similar structure]
 └── README.md                          # This file
 ```
